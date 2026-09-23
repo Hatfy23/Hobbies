@@ -1,0 +1,2604 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acervo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=IM+Fell+English:ital@0;1&family=Special+Elite&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --wood-dark: #1c140d;
+    --wood: #2f2116;
+    --wood-light: #4a3524;
+    --leather: #6b4226;
+    --parchment: #ece0c4;
+    --parchment-dark: #d8c79e;
+    --parchment-shadow: #b8a374;
+    --ink: #2b2118;
+    --ink-soft: #4a3f30;
+    --rust: #a8551f;
+    --rust-dark: #7a3d13;
+    --moss: #4f5d3a;
+    --moss-dark: #38431f;
+    --slate: #52606b;
+    --gold: #b8922e;
+    --red-stamp: #8c2f1f;
+  }
+
+  * { box-sizing: border-box; }
+
+  body{
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(ellipse at top, rgba(255,255,255,0.03), transparent 60%),
+      repeating-linear-gradient(90deg, rgba(0,0,0,0.08) 0px, transparent 2px, transparent 40px),
+      linear-gradient(180deg, var(--wood-dark), var(--wood) 40%, var(--wood-dark));
+    font-family: 'IM Fell English', serif;
+    font-size: 17px;
+    color: var(--parchment);
+    padding: 24px 16px 60px;
+  }
+
+  .wood-frame{
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  .app-header{
+    text-align: center;
+    margin-bottom: 18px;
+  }
+  .app-header h1{
+    font-family: 'Cinzel Decorative', serif;
+    font-weight: 900;
+    font-size: clamp(28px, 5vw, 46px);
+    letter-spacing: 1px;
+    color: var(--parchment);
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.5), 0 0 18px rgba(184,146,46,0.25);
+    margin: 0;
+  }
+  .app-header .subtitle{
+    font-style: italic;
+    color: var(--parchment-shadow);
+    margin: 6px 0 0;
+    font-size: 15px;
+  }
+
+  .main-tabs{
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 22px 0 20px;
+    flex-wrap: wrap;
+  }
+  .main-tab{
+    font-family: 'Special Elite', monospace;
+    background: var(--wood-light);
+    color: var(--parchment);
+    border: 2px solid var(--leather);
+    border-radius: 4px;
+    padding: 10px 22px;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.4);
+    transition: transform 0.12s ease, background 0.2s ease;
+  }
+  .main-tab:hover{ transform: translateY(-1px); }
+  .main-tab.active{
+    background: var(--rust);
+    border-color: var(--rust-dark);
+    color: #fff2df;
+  }
+
+  .tab-panel{ display: none; }
+  .tab-panel.active{ display: block; }
+
+  .cat-tabs{
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+  .cat-tab{
+    font-family: 'Special Elite', monospace;
+    background: transparent;
+    color: var(--parchment-shadow);
+    border: 1.5px solid var(--wood-light);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 12.5px;
+    cursor: pointer;
+  }
+  .cat-tab.active{
+    background: var(--moss);
+    border-color: var(--moss-dark);
+    color: #eef2e6;
+  }
+
+  .search-box-row{ margin-bottom: 14px; }
+  .obras-search-input{
+    width: 100%;
+    font-family: 'IM Fell English', serif;
+    font-size: 16px;
+    padding: 9px 12px;
+    border: 1px solid var(--parchment-shadow);
+    border-radius: 6px;
+    background: var(--parchment);
+    color: var(--ink);
+  }
+
+  .toolbar{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid var(--wood-light);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 22px;
+  }
+  .status-filters{ display: flex; gap: 6px; flex-wrap: wrap; }
+  .pill{
+    font-family: 'Special Elite', monospace;
+    font-size: 11.5px;
+    padding: 5px 12px;
+    border-radius: 14px;
+    border: 1px solid var(--wood-light);
+    background: transparent;
+    color: var(--parchment-shadow);
+    cursor: pointer;
+  }
+  .pill.active{ background: var(--slate); color: #fff; border-color: #37414a; }
+
+  select, .sort-controls select{
+    font-family: 'IM Fell English', serif;
+    background: var(--parchment);
+    color: var(--ink);
+    border: 1px solid var(--parchment-shadow);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 14px;
+  }
+
+  .btn-add{
+    font-family: 'Special Elite', monospace;
+    background: var(--rust);
+    color: #fff2df;
+    border: none;
+    border-radius: 4px;
+    padding: 9px 18px;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 var(--rust-dark);
+  }
+  .btn-add:active{ transform: translateY(2px); box-shadow: 0 1px 0 var(--rust-dark); }
+
+  .empty-msg{
+    text-align: center;
+    color: var(--parchment-shadow);
+    font-style: italic;
+    padding: 40px 10px;
+    font-size: 16px;
+  }
+
+  /* ---- Tabela de obras (consumo) ---- */
+  .table-wrap{
+    background: var(--parchment);
+    border: 3px solid var(--leather);
+    border-radius: 5px;
+    overflow-x: auto;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.4);
+  }
+  .obras-table{
+    width: 100%;
+    min-width: 820px;
+    border-collapse: collapse;
+    color: var(--ink);
+  }
+  .obras-table thead th{
+    font-family: 'Special Elite', monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-size: 13px;
+    text-align: left;
+    padding: 12px 14px;
+    background: var(--wood-light);
+    color: var(--parchment);
+    white-space: nowrap;
+  }
+  .obras-table tbody tr{
+    border-bottom: 1px solid var(--parchment-shadow);
+  }
+  .obras-table tbody tr:nth-child(even){ background: rgba(0,0,0,0.04); }
+  .obras-table tbody tr:hover{ background: rgba(184,146,46,0.14); }
+  .obras-table td{
+    padding: 12px 14px;
+    vertical-align: middle;
+    font-size: 16px;
+  }
+
+  .col-num{ text-align: center; width: 56px; }
+  .num-wrap{ display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .num-value{ font-family: 'Special Elite', monospace; font-weight: bold; font-size: 18px; min-width: 20px; text-align: center; }
+  .num-input{
+    font-family: 'Special Elite', monospace;
+    font-weight: bold;
+    font-size: 16px;
+    width: 34px;
+    text-align: center;
+    border: 1px solid var(--parchment-shadow);
+    border-radius: 3px;
+    background: #fbf6e8;
+    padding: 2px 0;
+    -moz-appearance: textfield;
+  }
+  .num-input::-webkit-outer-spin-button,
+  .num-input::-webkit-inner-spin-button{
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .num-arrows{ display: flex; flex-direction: column; gap: 2px; }
+  .num-arrows button{
+    width: 20px; height: 16px;
+    font-size: 9px;
+    border: 1px solid var(--ink-soft);
+    background: var(--parchment-dark);
+    border-radius: 2px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+  }
+
+  .col-cover{ width: 54px; }
+  .col-cover img{
+    width: 46px; height: 64px;
+    object-fit: cover;
+    border-radius: 2px;
+    border: 1px solid var(--parchment-shadow);
+    display: block;
+  }
+  .col-cover .cover-placeholder{
+    width: 46px; height: 64px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    background: var(--parchment-dark);
+    border-radius: 2px;
+  }
+
+  .col-title{ min-width: 180px; }
+  .t-title{ font-size: 18px; font-weight: bold; line-height: 1.2; }
+  .t-cat{
+    font-family: 'Special Elite', monospace;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--ink-soft);
+    margin-top: 2px;
+  }
+  .t-meta{
+    font-size: 12px;
+    font-style: italic;
+    color: var(--ink-soft);
+    margin-top: 3px;
+  }
+
+  .stamp{
+    display: inline-block;
+    font-family: 'Special Elite', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    padding: 4px 9px;
+    border: 2px solid currentColor;
+    border-radius: 3px;
+    transform: rotate(-6deg);
+    text-transform: uppercase;
+    opacity: 0.9;
+    background: rgba(255,255,255,0.15);
+    white-space: nowrap;
+  }
+  .stamp.wishlist{ color: var(--gold); font-style: italic; }
+  .stamp.fila{ color: var(--slate); }
+  .stamp.andamento{ color: var(--moss-dark); }
+  .stamp.concluido{ color: var(--red-stamp); }
+  .stamp.abandonado{ color: #7a7a7a; text-decoration: line-through; }
+
+  .col-progress{ min-width: 160px; }
+  .t-progress-row{
+    display: flex; align-items: center; gap: 7px;
+    font-family: 'Special Elite', monospace;
+    font-size: 14px;
+  }
+  .t-progress-row button{
+    width: 23px; height: 23px;
+    border-radius: 3px;
+    border: 1px solid var(--ink-soft);
+    background: var(--parchment-dark);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+  }
+  .progress-bar-track{
+    flex: 1;
+    min-width: 50px;
+    height: 7px;
+    background: var(--parchment-shadow);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-bar-fill{ height: 100%; background: var(--moss); }
+  .t-progress-label{ font-size: 12.5px; color: var(--ink-soft); margin-top: 3px; }
+
+  .col-rating{ font-size: 17px; letter-spacing: 2px; color: var(--gold); white-space: nowrap; }
+  .col-rating .off{ color: var(--parchment-shadow); }
+
+  .col-community{ white-space: nowrap; }
+  .community-badge{
+    font-family: 'Special Elite', monospace;
+    font-size: 13px;
+    background: var(--wood-light);
+    color: var(--parchment);
+    border-radius: 3px;
+    padding: 3px 8px;
+    display: inline-block;
+  }
+  .community-badge.empty{ background: transparent; border: 1px dashed var(--parchment-shadow); color: var(--parchment-shadow); }
+
+  .col-actions{ display: flex; gap: 7px; flex-wrap: wrap; white-space: nowrap; }
+  .col-actions button{
+    font-family: 'Special Elite', monospace;
+    font-size: 13px;
+    background: transparent;
+    border: 1px solid var(--ink-soft);
+    color: var(--ink-soft);
+    border-radius: 3px;
+    padding: 5px 11px;
+    cursor: pointer;
+  }
+  .col-actions button.danger{ color: var(--red-stamp); border-color: var(--red-stamp); }
+
+  /* ---- Gerais (plaques) ---- */
+  .plaques-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+  }
+  .plaque{
+    background: linear-gradient(180deg, var(--wood-light), var(--wood));
+    border: 3px solid var(--leather);
+    border-radius: 6px;
+    padding: 16px;
+    box-shadow: 0 5px 12px rgba(0,0,0,0.45);
+    position: relative;
+  }
+  .plaque.is-focus{ border-color: var(--gold); box-shadow: 0 5px 16px rgba(184,146,46,0.35); }
+  .plaque-order-arrows{ position: absolute; top: 12px; right: 40px; display: flex; flex-direction: column; gap: 1px; }
+  .plaque-order-arrows button{
+    background: none; border: none; color: var(--parchment-shadow); cursor: pointer; font-size: 11px; line-height: 1; padding: 1px;
+  }
+  .plaque-order-arrows button:disabled{ opacity: 0.25; cursor: default; }
+  .plaque-focus-btn{
+    position: absolute; top: 10px; right: 10px;
+    background: none; border: none; cursor: pointer;
+    font-size: 18px; color: var(--parchment-shadow);
+    line-height: 1;
+  }
+  .plaque-focus-btn.active{ color: var(--gold); }
+  .plaque-head{ display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding-right: 55px; }
+  .plaque-icon{ font-size: 28px; }
+  .plaque-name{
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 18px;
+    color: var(--parchment);
+  }
+  .level-track{ display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  .level-box{
+    flex: 1 1 28%;
+    text-align: center;
+    font-family: 'Special Elite', monospace;
+    font-size: 10.5px;
+    padding: 8px 2px;
+    border: 1.5px solid var(--parchment-shadow);
+    border-radius: 4px;
+    color: var(--parchment-shadow);
+    cursor: pointer;
+    background: rgba(0,0,0,0.2);
+  }
+  .level-box.filled{
+    background: var(--gold);
+    color: var(--wood-dark);
+    border-color: var(--gold);
+    font-weight: bold;
+  }
+  .level-box.current{
+    outline: 2px solid var(--parchment);
+    outline-offset: 1px;
+  }
+  .plaque-meta{
+    font-size: 12.5px;
+    color: var(--parchment-shadow);
+    font-style: italic;
+    margin-bottom: 8px;
+  }
+  .plaque-stats{
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px;
+    font-family: 'Special Elite', monospace;
+    font-size: 11.5px;
+    color: var(--parchment-shadow);
+    margin: 8px 0;
+  }
+  .plaque-next{
+    font-size: 12.5px;
+    color: var(--parchment);
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin-bottom: 10px;
+  }
+  .session-log{
+    border-top: 1px dashed var(--parchment-shadow);
+    margin: 8px 0;
+    padding-top: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+  .session-entry{
+    display: flex; justify-content: space-between; gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 12px;
+  }
+  .session-entry:last-child{ border-bottom: none; }
+  .session-entry-main{ flex: 1; }
+  .session-entry-label{ font-family: 'Special Elite', monospace; color: var(--gold); font-size: 11px; }
+  .session-entry-notes{ color: var(--parchment-shadow); margin-top: 2px; }
+  .session-entry-del{ background: none; border: none; color: var(--parchment-shadow); cursor: pointer; font-size: 12px; }
+  .session-empty{ font-size: 12px; color: var(--parchment-shadow); font-style: italic; margin: 0; }
+  .plaque-actions{ display: flex; gap: 8px; flex-wrap: wrap; }
+  .plaque-actions button{
+    font-family: 'Special Elite', monospace;
+    font-size: 11px;
+    background: transparent;
+    border: 1px solid var(--parchment-shadow);
+    color: var(--parchment);
+    border-radius: 3px;
+    padding: 4px 10px;
+    cursor: pointer;
+  }
+  .plaque-actions button.danger{ color: #e08a75; border-color: #e08a75; }
+  .plaque-actions button.primary{ background: var(--moss); border-color: var(--moss-dark); }
+  .gerais-summary{
+    font-family: 'Special Elite', monospace;
+    font-size: 12.5px;
+    color: var(--parchment-shadow);
+    align-self: center;
+  }
+
+  /* ---- Modal ---- */
+  .modal-overlay{
+    position: fixed; inset: 0;
+    background: rgba(10, 6, 3, 0.72);
+    display: flex; align-items: flex-start; justify-content: center;
+    padding: 40px 16px;
+    overflow-y: auto;
+    z-index: 50;
+  }
+  .modal-overlay[hidden]{ display: none; }
+  .modal{
+    background: var(--parchment);
+    color: var(--ink);
+    max-width: 520px;
+    width: 100%;
+    border-radius: 6px;
+    padding: 26px 26px 22px;
+    position: relative;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    border: 4px solid var(--leather);
+  }
+  .modal h2{
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 22px;
+    margin: 0 0 14px;
+  }
+  .modal-close{
+    position: absolute; top: 10px; right: 14px;
+    background: none; border: none; font-size: 22px;
+    cursor: pointer; color: var(--ink-soft);
+  }
+  .modal-tabs{ display: flex; gap: 8px; margin-bottom: 14px; }
+  .modal-tab{
+    font-family: 'Special Elite', monospace;
+    font-size: 12px;
+    padding: 6px 14px;
+    border: 1px solid var(--ink-soft);
+    background: transparent;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    color: var(--ink-soft);
+  }
+  .modal-tab.active{ background: var(--ink-soft); color: var(--parchment); }
+
+  #mtab-search{ display: none; }
+  #mtab-search.active{ display: block; }
+
+  .search-row{ display: flex; gap: 8px; margin-bottom: 10px; }
+  .search-row input{
+    flex: 1;
+    font-family: 'IM Fell English', serif;
+    font-size: 16px;
+    padding: 7px 9px;
+    border: 1px solid var(--parchment-shadow);
+    border-radius: 4px;
+  }
+  .search-row button{
+    font-family: 'Special Elite', monospace;
+    background: var(--moss);
+    color: #eef2e6;
+    border: none;
+    border-radius: 4px;
+    padding: 0 16px;
+    cursor: pointer;
+    font-size: 13.5px;
+  }
+  .search-status{ font-size: 13.5px; font-style: italic; color: var(--ink-soft); min-height: 16px; }
+  #rawgKeyInputRow input{
+    flex: 1;
+    font-family: 'IM Fell English', serif;
+    font-size: 14px;
+    padding: 6px 8px;
+    border: 1px solid var(--parchment-shadow);
+    border-radius: 4px;
+  }
+  .search-results{
+    max-height: 240px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .search-result-item{
+    display: flex; gap: 10px; align-items: center;
+    padding: 6px;
+    border: 1px solid var(--parchment-shadow);
+    border-radius: 4px;
+    cursor: pointer;
+    background: rgba(255,255,255,0.35);
+  }
+  .search-result-item:hover{ background: rgba(255,255,255,0.7); }
+  .search-result-item img{ width: 40px; height: 56px; object-fit: cover; border-radius: 2px; }
+  .search-result-item .sri-text{ font-size: 14.5px; line-height: 1.3; }
+  .search-result-item .sri-sub{ font-size: 12px; color: var(--ink-soft); font-style: italic; }
+
+  .item-form{ display: none; flex-direction: column; gap: 10px; margin-top: 6px; }
+  .item-form.active{ display: flex; }
+  .item-form label{ font-size: 13px; font-family: 'Special Elite', monospace; color: var(--ink-soft); }
+  .item-form input[type="text"], .item-form input[type="number"], .item-form input[type="url"], .item-form input[type="date"], .item-form input[type="email"], .item-form input[type="password"], .item-form select, .item-form textarea{
+    width: 100%;
+    font-family: 'IM Fell English', serif;
+    font-size: 16px;
+    padding: 7px 9px;
+    border: 1px solid var(--parchment-shadow);
+    border-radius: 4px;
+    background: #fbf6e8;
+  }
+  .item-form textarea{ min-height: 60px; resize: vertical; }
+  .form-row{ display: flex; gap: 10px; }
+  .form-row > div{ flex: 1; }
+  .cover-preview{ width: 60px; height: 84px; object-fit: cover; border-radius: 3px; border: 1px solid var(--parchment-shadow); }
+
+  .star-input{ font-size: 22px; cursor: pointer; letter-spacing: 3px; color: var(--parchment-shadow); }
+  .star-input span.on{ color: var(--gold); }
+
+  .form-actions{ display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+  .form-actions button{
+    font-family: 'Special Elite', monospace;
+    font-size: 13px;
+    padding: 8px 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+  }
+  .btn-save{ background: var(--rust); color: #fff2df; }
+  .btn-cancel{ background: transparent; border: 1px solid var(--ink-soft) !important; color: var(--ink-soft); }
+  .btn-delete{ background: var(--red-stamp); color: #fff2df; margin-right: auto; }
+
+  @media (max-width: 480px){
+    .form-row{ flex-direction: column; }
+  }
+
+  html, body{ overflow-x: hidden; }
+
+  .t-year{ font-weight: normal; color: var(--ink-soft); font-size: 0.85em; }
+  .ref-link{ color: var(--slate); text-decoration: none; font-size: 13px; }
+  .ref-link:hover{ text-decoration: underline; }
+
+  @media (max-width: 720px){
+    .table-wrap{ overflow-x: visible; border: none; }
+    table.responsive-stack{ min-width: 0; width: 100%; }
+    table.responsive-stack thead{ position: absolute; top: -9999px; left: -9999px; }
+    table.responsive-stack, table.responsive-stack tbody, table.responsive-stack tr, table.responsive-stack td{ display: block; width: 100%; }
+    table.responsive-stack tr{
+      border: 1px solid var(--wood-light);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      padding: 10px;
+      background: rgba(0,0,0,0.18);
+    }
+    table.responsive-stack td{
+      border: none;
+      padding: 5px 0;
+      text-align: left;
+    }
+    table.responsive-stack td[data-label]::before{
+      content: attr(data-label) ":";
+      display: block;
+      font-family: 'Special Elite', monospace;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--parchment-shadow);
+      margin-bottom: 2px;
+    }
+    table.responsive-stack td.col-num,
+    table.responsive-stack td.col-cover{
+      display: inline-block;
+      width: auto;
+      vertical-align: top;
+      margin-right: 14px;
+    }
+    table.responsive-stack td.col-title::before{ content: none; }
+    table.responsive-stack td.col-actions{ display: flex; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="userBar" style="position:fixed;top:10px;right:14px;font-family:'Special Elite',monospace;font-size:12px;color:var(--parchment-shadow);z-index:60;display:flex;align-items:center;gap:8px;" hidden>
+  <span style="display:inline-flex;align-items:center;gap:5px;">
+    <span style="width:7px;height:7px;border-radius:50%;background:#6b8f4e;display:inline-block;"></span>
+    Conectado · <span id="codeLabel" style="letter-spacing:1px;"></span>
+  </span>
+  ·
+  <button id="btnDisconnect" type="button" style="background:none;border:none;color:var(--parchment);cursor:pointer;text-decoration:underline;font-family:inherit;font-size:inherit;">Trocar código</button>
+</div>
+
+<div id="authOverlay" class="modal-overlay">
+  <div class="modal" style="max-width:420px;">
+    <h2 id="authTitle">Conectar diário</h2>
+    <p style="font-family:'IM Fell English',serif;color:var(--parchment-shadow);font-size:14px;margin-top:-6px;">Use o mesmo código em todos os aparelhos onde quiser ver seu diário. Sem senha, sem login de novo — só cola o código uma vez.</p>
+
+    <div id="codeGenView">
+      <label style="font-family:'Special Elite',monospace;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--parchment-shadow);">Seu código</label>
+      <div style="display:flex;gap:8px;align-items:center;margin:6px 0 4px;">
+        <div id="generatedCode" style="flex:1;font-family:'Special Elite',monospace;font-size:20px;letter-spacing:3px;background:#fbf6e8;border:1px solid var(--parchment-shadow);border-radius:4px;padding:10px 12px;text-align:center;"></div>
+        <button type="button" id="btnCopyCode" class="btn-cancel" style="white-space:nowrap;">Copiar</button>
+      </div>
+      <p class="search-status">Anote esse código — é ele que você vai colar nos outros aparelhos.</p>
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" id="btnRegenerateCode">Gerar outro</button>
+        <button type="button" class="btn-save" id="btnUseGeneratedCode">Usar este código</button>
+      </div>
+    </div>
+
+    <hr style="border:none;border-top:1px dashed var(--parchment-shadow);margin:18px 0;">
+
+    <div id="codeEnterView">
+      <label style="font-family:'Special Elite',monospace;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--parchment-shadow);">Já tenho um código</label>
+      <form id="formEnterCode" class="item-form active">
+        <input type="text" id="enterCodeInput" placeholder="ex: BKCX-WH5H" style="text-transform:uppercase;letter-spacing:2px;text-align:center;margin-top:6px;">
+        <p class="search-status" id="authStatus"></p>
+        <div class="form-actions">
+          <button type="submit" class="btn-save">Conectar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="wood-frame">
+  <header class="app-header">
+    <h1>Acervo</h1>
+    <p class="subtitle">um caderno de campo pras suas aventuras, obras e ofícios</p>
+  </header>
+
+  <nav class="main-tabs">
+    <button class="main-tab active" data-tab="consumo">📖 The Shelf</button>
+    <button class="main-tab" data-tab="gerais">🛠️ The Workshop</button>
+  </nav>
+
+  <main>
+    <section id="tab-consumo" class="tab-panel active">
+      <div class="cat-tabs" id="catTabs">
+        <button class="cat-tab active" data-cat="todos">Todos</button>
+        <button class="cat-tab" data-cat="serie">Séries</button>
+        <button class="cat-tab" data-cat="anime">Animes</button>
+        <button class="cat-tab" data-cat="filme">Filmes</button>
+        <button class="cat-tab" data-cat="jogo">Jogos</button>
+        <button class="cat-tab" data-cat="livro">Livros</button>
+        <button class="cat-tab" data-cat="manga">Mangás</button>
+        <button class="cat-tab" data-cat="outro">Outro</button>
+      </div>
+
+      <div class="search-box-row">
+        <input type="text" id="obrasSearchInput" class="obras-search-input" placeholder="🔍 Buscar no seu acervo...">
+      </div>
+
+      <div class="toolbar">
+        <div class="status-filters" id="statusFilters">
+          <button class="pill active" data-status="todos">Todos</button>
+          <button class="pill" data-status="wishlist">Wishlist</button>
+          <button class="pill" data-status="fila">Na Fila</button>
+          <button class="pill" data-status="andamento">Comecei</button>
+          <button class="pill" data-status="concluido">Terminei</button>
+          <button class="pill" data-status="abandonado">Pausei/Dropei</button>
+        </div>
+        <div class="sort-controls">
+          <select id="sortSelect">
+            <option value="ordem">Minha ordem</option>
+            <option value="status">Status</option>
+            <option value="recente">Adicionado recentemente</option>
+            <option value="nota">Minha nota</option>
+            <option value="comunidade">Nota da comunidade</option>
+            <option value="titulo">Título (A-Z)</option>
+          </select>
+          <button type="button" id="btnSortDir" title="Inverter ordem (crescente/decrescente)" style="font-family:'Special Elite',monospace;background:none;border:1px solid var(--parchment-shadow);border-radius:4px;padding:4px 9px;color:var(--ink-soft);cursor:pointer;margin-left:6px;">⬇</button>
+        </div>
+        <button class="btn-add" id="btnAddConsumo">+ Nova Obra</button>
+      </div>
+
+      <div class="table-wrap">
+        <table class="obras-table responsive-stack">
+          <thead>
+            <tr>
+              <th>Ordem</th>
+              <th>Capa</th>
+              <th>Obra</th>
+              <th>Status</th>
+              <th>Progresso</th>
+              <th>Comunidade</th>
+              <th>Minha Nota</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="consumoTableBody"></tbody>
+        </table>
+      </div>
+      <p id="consumoEmpty" class="empty-msg" hidden>A estante tá vazia por aqui. Clique em "+ Nova Obra" pra começar.</p>
+    </section>
+
+    <section id="tab-gerais" class="tab-panel">
+      <div class="toolbar">
+        <div id="geraisSummary" class="gerais-summary"></div>
+        <div></div>
+        <button class="btn-add" id="btnAddGeral">+ Novo Hobby</button>
+      </div>
+      <div id="geraisGrid" class="plaques-grid"></div>
+      <p id="geraisEmpty" class="empty-msg" hidden>Nenhum hobby cadastrado ainda. Que tal registrar o primeiro?</p>
+    </section>
+  </main>
+</div>
+
+<!-- Modal Consumo -->
+<div id="modalConsumo" class="modal-overlay" hidden>
+  <div class="modal">
+    <button class="modal-close" data-close type="button">&times;</button>
+    <h2 id="modalConsumoTitle">Nova Obra</h2>
+
+    <div class="modal-tabs">
+      <button type="button" class="modal-tab active" data-mtab="search">Buscar na web</button>
+      <button type="button" class="modal-tab" data-mtab="manual">Preencher manualmente</button>
+    </div>
+
+    <div id="mtab-search" class="active">
+      <div class="search-row">
+        <select id="searchCategory">
+          <option value="serie">Séries</option>
+          <option value="anime">Animes</option>
+          <option value="filme">Filmes</option>
+          <option value="livro">Livros</option>
+          <option value="manga">Mangás</option>
+          <option value="jogo">Jogos</option>
+        </select>
+        <input type="text" id="searchQuery" placeholder="Digite o nome da obra...">
+        <button type="button" id="btnSearch">Buscar</button>
+      </div>
+      <div id="rawgKeyBox" hidden style="background:#fbf6e8;border:1px dashed var(--parchment-shadow);border-radius:4px;padding:8px 10px;margin-top:8px;font-size:12.5px;">
+        <span id="rawgKeyMissing">Pra puxar nota da comunidade dos jogos automaticamente, cole aqui uma chave grátis da RAWG (cadastro rápido, sem cartão): <a href="https://rawg.io/apidocs" target="_blank" rel="noopener">rawg.io/apidocs</a></span>
+        <span id="rawgKeyOk" hidden>Chave RAWG configurada — nota do jogo será buscada automaticamente. <button type="button" id="btnRawgKeyClear" class="btn-cancel" style="padding:2px 8px;font-size:11px;">Trocar chave</button></span>
+        <div id="rawgKeyInputRow" style="display:flex;gap:6px;margin-top:6px;">
+          <input type="text" id="rawgKeyInput" placeholder="cole sua chave RAWG aqui" style="flex:1;">
+          <button type="button" id="btnRawgKeySave" class="btn-cancel" style="white-space:nowrap;">Salvar chave</button>
+        </div>
+      </div>
+      <div id="tmdbKeyBox" hidden style="background:#fbf6e8;border:1px dashed var(--parchment-shadow);border-radius:4px;padding:8px 10px;margin-top:8px;font-size:12.5px;">
+        <span id="tmdbKeyMissing">A busca de filmes e séries funciona sem chave (iTunes/TVMaze), mas é limitada e falha pra algumas franquias (ex: Senhor dos Anéis) e não traz nota de séries — cole uma chave grátis da TMDB pra melhorar as duas: <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">themoviedb.org/settings/api</a></span>
+        <span id="tmdbKeyOk" hidden>Chave TMDB configurada — busca melhor e nota automática pra filmes e séries. <button type="button" id="btnTmdbKeyClear" class="btn-cancel" style="padding:2px 8px;font-size:11px;">Trocar chave</button></span>
+        <div id="tmdbKeyInputRow" style="display:flex;gap:6px;margin-top:6px;">
+          <input type="text" id="tmdbKeyInput" placeholder="cole sua chave TMDB aqui" style="flex:1;">
+          <button type="button" id="btnTmdbKeySave" class="btn-cancel" style="white-space:nowrap;">Salvar chave</button>
+        </div>
+      </div>
+      <p class="search-status" id="searchStatus"></p>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <form id="formConsumo" class="item-form active">
+      <input type="hidden" id="fItemId">
+      <div class="form-row">
+        <div>
+          <label>Título</label>
+          <input type="text" id="fTitle" required>
+        </div>
+        <div>
+          <label>Categoria</label>
+          <select id="fCategory">
+            <option value="serie">Séries</option>
+            <option value="anime">Animes</option>
+            <option value="filme">Filmes</option>
+            <option value="jogo">Jogos</option>
+            <option value="livro">Livros</option>
+            <option value="manga">Mangás</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div>
+          <label>Capa (URL da imagem, opcional)</label>
+          <input type="url" id="fCover" placeholder="https://...">
+        </div>
+        <div style="flex: 0 0 60px;">
+          <label>&nbsp;</label>
+          <img id="fCoverPreview" class="cover-preview" src="" alt="" hidden>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div>
+          <label>Status</label>
+          <select id="fStatus">
+            <option value="wishlist">Wishlist</option>
+            <option value="fila" selected>Na Fila</option>
+            <option value="andamento">Comecei</option>
+            <option value="concluido">Terminei</option>
+            <option value="abandonado">Pausei/Dropei</option>
+          </select>
+        </div>
+        <div>
+          <label>Minha nota</label>
+          <div class="star-input" id="fStars" data-value="0">☆☆☆☆☆</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div>
+          <label>Nota da comunidade (0–10)</label>
+          <input type="number" id="fCommunityRating" min="0" max="10" step="0.1" placeholder="ex: 8.2">
+        </div>
+        <div id="fDurationWrap">
+          <label id="fDurationLabel">Duração média por episódio (min)</label>
+          <input type="text" id="fDuration" placeholder="ex: 24 min/episódio">
+        </div>
+      </div>
+      <p class="search-status" id="communityNote" style="margin: -4px 0 2px;"></p>
+
+      <div class="form-row">
+        <div>
+          <label>Ano</label>
+          <input type="number" id="fYear" placeholder="ex: 2023">
+        </div>
+        <div>
+          <label>Link de referência (opcional)</label>
+          <input type="url" id="fRefLink" placeholder="https://...">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div>
+          <label id="fProgressCurrentLabel">Progresso atual</label>
+          <input type="number" id="fProgressCurrent" min="0" value="0">
+        </div>
+        <div>
+          <label id="fProgressTotalLabel">Total (se souber)</label>
+          <input type="number" id="fProgressTotal" min="0" placeholder="ex: 24">
+          <button type="button" id="btnOpenHLTB" hidden style="margin-top:5px;font-family:'Special Elite',monospace;font-size:11.5px;background:none;border:1px solid var(--parchment-shadow);border-radius:4px;padding:4px 8px;color:var(--ink-soft);cursor:pointer;">⏱ Ver tempo no HowLongToBeat</button>
+        </div>
+      </div>
+
+      <div id="fChaptersWrap" class="form-row" hidden>
+        <div>
+          <label>Capítulos totais (opcional)</label>
+          <input type="number" id="fChaptersTotal" min="0" placeholder="ex: 12">
+        </div>
+      </div>
+
+      <div id="fReleaseStatusWrap" class="form-row" hidden>
+        <div>
+          <label>Situação da obra</label>
+          <select id="fReleaseStatus">
+            <option value="">Não informado</option>
+            <option value="ongoing">📡 Em lançamento</option>
+            <option value="finished">Finalizada</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label>Anotações</label>
+        <textarea id="fNotes" placeholder="Onde parei, impressões, recomendação de quem..."></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-delete" id="btnDeleteConsumo" hidden>Excluir</button>
+        <button type="button" class="btn-cancel" data-close>Cancelar</button>
+        <button type="submit" class="btn-save">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Geral -->
+<div id="modalGeral" class="modal-overlay" hidden>
+  <div class="modal small">
+    <button class="modal-close" data-close type="button">&times;</button>
+    <h2 id="modalGeralTitle">Novo Hobby</h2>
+    <form id="formGeral" class="item-form active">
+      <input type="hidden" id="gItemId">
+      <div class="form-row">
+        <div style="flex: 0 0 70px;">
+          <label>Ícone</label>
+          <input type="text" id="gIcon" maxlength="4" placeholder="🥋" value="🥋">
+        </div>
+        <div>
+          <label>Nome do hobby</label>
+          <input type="text" id="gName" placeholder="ex: Jiu-Jitsu, Desenho..." required>
+        </div>
+      </div>
+
+      <div>
+        <label>Nível atual</label>
+        <div class="level-track" id="gLevelTrack" data-value="nao_iniciado">
+          <div class="level-box" data-level="nao_iniciado">Não Iniciado</div>
+          <div class="level-box" data-level="iniciante">Iniciante</div>
+          <div class="level-box" data-level="basico">Básico</div>
+          <div class="level-box" data-level="intermediario">Intermediário</div>
+          <div class="level-box" data-level="avancado">Avançado</div>
+          <div class="level-box" data-level="mestre">Mestre</div>
+        </div>
+      </div>
+
+      <div>
+        <label>Próximos passos</label>
+        <textarea id="gNotes" placeholder="ex: aprender a dar aú sem mão"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-delete" id="btnDeleteGeral" hidden>Excluir</button>
+        <button type="button" class="btn-cancel" data-close>Cancelar</button>
+        <button type="submit" class="btn-save">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="modalSession" class="modal-overlay" hidden>
+  <div class="modal small">
+    <button class="modal-close" data-close type="button">&times;</button>
+    <h2>Registrar sessão</h2>
+    <form id="formSession" class="item-form active">
+      <input type="hidden" id="sHobbyId">
+      <div class="form-row">
+        <div>
+          <label>Data</label>
+          <input type="date" id="sDate">
+        </div>
+        <div>
+          <label>Duração (minutos)</label>
+          <input type="number" id="sMinutes" min="0" placeholder="ex: 60" required>
+        </div>
+      </div>
+      <div>
+        <label>O que foi feito</label>
+        <textarea id="sNotes" placeholder="ex: ginga, ritmo, chute ponteira"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" data-close>Cancelar</button>
+        <button type="submit" class="btn-save">Registrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Supabase ----------
+  var SUPABASE_URL = 'https://cfdzwduajsatbydphrtq.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNmZHp3ZHVhanNhdGJ5ZHBocnRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MzQ2MDIsImV4cCI6MjA5MzQxMDYwMn0.zUB9rASXCXxKVJFfvXrfcMCivQ3fPV4AE0Jvo4hCamQ';
+  var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  var OBRAS_TABLE = 'hobbydiario_obras';
+  var HOBBIES_TABLE = 'hobbydiario_hobbies';
+  var CODE_KEY = 'hobbydiario_sync_code';
+  var currentCode = null;
+
+  var CATEGORIES = {
+    serie:  { label: 'Série', icon: '📺', unit: 'episódio', currentLabel: 'Episódio atual', totalLabel: 'Total de episódios', showDuration: true, durationLabel: 'Duração média por episódio (min)', showReleaseFlag: true },
+    anime:  { label: 'Anime', icon: '🍥', unit: 'episódio', currentLabel: 'Episódio atual', totalLabel: 'Total de episódios', showDuration: true, durationLabel: 'Duração média por episódio (min)', showReleaseFlag: true },
+    filme:  { label: 'Filme', icon: '🎬', unit: 'minuto', currentLabel: 'Minutos assistidos', totalLabel: 'Duração total (min)', showDuration: false },
+    jogo:   { label: 'Jogo', icon: '🎮', unit: 'hora', currentLabel: 'Horas jogadas', totalLabel: 'Horas pra zerar', showDuration: false, showHLTB: true },
+    livro:  { label: 'Livro', icon: '📚', unit: 'página', currentLabel: 'Página atual', totalLabel: 'Total de páginas', showDuration: false, showChapters: true },
+    manga:  { label: 'Mangá', icon: '📖', unit: 'capítulo', currentLabel: 'Capítulo atual', totalLabel: 'Total de capítulos', showDuration: false, showReleaseFlag: true },
+    outro:  { label: 'Outro', icon: '✨', unit: 'unidade', currentLabel: 'Progresso atual', totalLabel: 'Total (se souber)', showDuration: true, durationLabel: 'Duração média' }
+  };
+
+  var STATUS_LABELS = {
+    wishlist: 'Wishlist',
+    fila: 'Na Fila',
+    andamento: 'Comecei',
+    concluido: 'Terminei',
+    abandonado: 'Pausei/Dropei'
+  };
+
+  var LEVEL_LABELS = {
+    nao_iniciado: 'Não Iniciado',
+    iniciante: 'Iniciante',
+    basico: 'Básico',
+    intermediario: 'Intermediário',
+    avancado: 'Avançado',
+    mestre: 'Mestre'
+  };
+  var LEVEL_ORDER = ['nao_iniciado', 'iniciante', 'basico', 'intermediario', 'avancado', 'mestre'];
+
+  var RAWG_KEY_STORAGE = 'hobbydiario_rawg_key';
+  function getRawgKey(){ return (localStorage.getItem(RAWG_KEY_STORAGE) || '').trim(); }
+
+  var TMDB_KEY_STORAGE = 'hobbydiario_tmdb_key';
+  function getTmdbKey(){ return (localStorage.getItem(TMDB_KEY_STORAGE) || '').trim(); }
+
+  // ---------- mapping: JS object <-> DB row ----------
+  function obraToRow(item){
+    return {
+      id: item.id,
+      sync_code: currentCode,
+      title: item.title,
+      category: item.category,
+      cover: item.cover || null,
+      status: item.status,
+      community_rating: (item.communityRating != null ? item.communityRating : null),
+      duration: item.duration || null,
+      progress_current: item.progressCurrent || 0,
+      progress_total: (item.progressTotal != null ? item.progressTotal : null),
+      chapters_total: (item.chaptersTotal != null ? item.chaptersTotal : null),
+      release_status: item.releaseStatus || null,
+      year: item.year != null ? item.year : null,
+      ref_link: item.refLink || null,
+      notes: item.notes || null,
+      rating: item.rating || 0,
+      order_index: item.order || 0,
+      added_at: item.addedAt ? new Date(item.addedAt).toISOString() : new Date().toISOString()
+    };
+  }
+  function rowToObra(row){
+    return {
+      id: row.id,
+      title: row.title,
+      category: row.category,
+      cover: row.cover || '',
+      status: row.status,
+      communityRating: row.community_rating,
+      duration: row.duration || '',
+      progressCurrent: row.progress_current || 0,
+      progressTotal: row.progress_total,
+      chaptersTotal: row.chapters_total,
+      releaseStatus: row.release_status || null,
+      year: row.year != null ? row.year : null,
+      refLink: row.ref_link || '',
+      notes: row.notes || '',
+      rating: row.rating || 0,
+      order: row.order_index || 0,
+      addedAt: row.added_at ? new Date(row.added_at).getTime() : Date.now()
+    };
+  }
+  function hobbyToRow(h){
+    return {
+      id: h.id,
+      sync_code: currentCode,
+      name: h.name,
+      icon: h.icon || '✨',
+      level: h.level || 'nao_iniciado',
+      notes: h.notes || null,
+      focus: !!h.focus,
+      order_index: h.order || 0,
+      sessions: JSON.stringify(h.sessions || [])
+    };
+  }
+  function rowToHobby(row){
+    var sessions = [];
+    try { sessions = row.sessions ? JSON.parse(row.sessions) : []; } catch(e){ sessions = []; }
+    return {
+      id: row.id,
+      name: row.name,
+      icon: row.icon || '✨',
+      level: row.level || 'nao_iniciado',
+      notes: row.notes || '',
+      focus: !!row.focus,
+      order: row.order_index || 0,
+      sessions: sessions
+    };
+  }
+
+  // ---------- remote storage (Supabase) ----------
+  function loadConsumo(){
+    return supabase.from(OBRAS_TABLE).select('*').eq('sync_code', currentCode).then(function(res){
+      if(res.error){ console.error('erro ao carregar obras', res.error); return []; }
+      return (res.data || []).map(rowToObra);
+    });
+  }
+  function saveConsumo(list){
+    if(!currentCode || !list.length) return;
+    supabase.from(OBRAS_TABLE).upsert(list.map(obraToRow), { onConflict: 'id' }).then(function(res){
+      if(res.error) console.error('erro ao salvar obras', res.error);
+    });
+  }
+  function deleteObraRemote(id){
+    if(!currentCode) return;
+    supabase.from(OBRAS_TABLE).delete().eq('id', id).eq('sync_code', currentCode).then(function(res){
+      if(res.error) console.error('erro ao excluir obra', res.error);
+    });
+  }
+
+  function loadGerais(){
+    return supabase.from(HOBBIES_TABLE).select('*').eq('sync_code', currentCode).then(function(res){
+      if(res.error){ console.error('erro ao carregar hobbies', res.error); return []; }
+      return (res.data || []).map(rowToHobby);
+    });
+  }
+  function saveGerais(list){
+    if(!currentCode || !list.length) return;
+    supabase.from(HOBBIES_TABLE).upsert(list.map(hobbyToRow), { onConflict: 'id' }).then(function(res){
+      if(res.error) console.error('erro ao salvar hobbies', res.error);
+    });
+  }
+  function deleteHobbyRemote(id){
+    if(!currentCode) return;
+    supabase.from(HOBBIES_TABLE).delete().eq('id', id).eq('sync_code', currentCode).then(function(res){
+      if(res.error) console.error('erro ao excluir hobby', res.error);
+    });
+  }
+
+  var consumoItems = [];
+  var geraisItems = [];
+
+  function uid(){
+    return 'id_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+  }
+
+  // ---------- state: filters ----------
+  var currentCat = 'todos';
+  var currentStatus = 'todos';
+  var currentSearch = '';
+  var currentSort = 'ordem';
+  var currentSortDir = 1;
+  var STATUS_ORDER = ['wishlist', 'fila', 'andamento', 'concluido', 'abandonado'];
+
+  // ---------- main tabs ----------
+  var mainTabs = document.querySelectorAll('.main-tab');
+  mainTabs.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      mainTabs.forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      var target = btn.getAttribute('data-tab');
+      document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+      document.getElementById('tab-' + target).classList.add('active');
+    });
+  });
+
+  document.getElementById('catTabs').addEventListener('click', function(e){
+    var btn = e.target.closest('.cat-tab');
+    if(!btn) return;
+    document.querySelectorAll('.cat-tab').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentCat = btn.getAttribute('data-cat');
+    renderConsumo();
+  });
+
+  document.getElementById('statusFilters').addEventListener('click', function(e){
+    var btn = e.target.closest('.pill');
+    if(!btn) return;
+    document.querySelectorAll('.pill').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentStatus = btn.getAttribute('data-status');
+    renderConsumo();
+  });
+
+  document.getElementById('sortSelect').addEventListener('change', function(e){
+    currentSort = e.target.value;
+    renderConsumo();
+  });
+
+  document.getElementById('btnSortDir').addEventListener('click', function(){
+    currentSortDir *= -1;
+    this.textContent = currentSortDir === 1 ? '⬇' : '⬆';
+    renderConsumo();
+  });
+
+  document.getElementById('obrasSearchInput').addEventListener('input', function(e){
+    currentSearch = e.target.value.trim().toLowerCase();
+    renderConsumo();
+  });
+
+  // ---------- render: consumo ----------
+  function escapeHtml(str){
+    if(str == null) return '';
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
+  }
+
+  function starString(rating){
+    rating = rating || 0;
+    var html = '';
+    for(var i = 1; i <= 5; i++){
+      html += i <= rating ? '★' : '<span class="off">☆</span>';
+    }
+    return html;
+  }
+
+  // Lets progress drive the status forward automatically: starting to consume
+  // something bumps it out of Wishlist/Na Fila into Comecei, and finishing it
+  // bumps it into Terminei. Never touches a status the person already advanced
+  // manually (Comecei, Terminei, Pausei/Dropei) except to complete it.
+  function autoStatus(status, progressCurrent, progressTotal){
+    if(status === 'abandonado') return status; // nunca mexe numa escolha manual de Pausei/Dropei
+    if(progressTotal && progressCurrent >= progressTotal) return 'concluido';
+    if(progressCurrent > 0){
+      if(status === 'fila' || status === 'wishlist' || status === 'concluido') return 'andamento';
+      return status;
+    }
+    // progresso voltou pra 0: desfaz o avanço automático (Comecei/Terminei -> Na Fila)
+    if(status === 'andamento' || status === 'concluido') return 'fila';
+    return status;
+  }
+
+  function renderConsumo(){
+    var tbody = document.getElementById('consumoTableBody');
+    var tableWrap = document.querySelector('#tab-consumo .table-wrap');
+    var emptyMsg = document.getElementById('consumoEmpty');
+
+    var list = consumoItems.filter(function(item){
+      var okCat = currentCat === 'todos' || item.category === currentCat;
+      var okStatus = currentStatus === 'todos' || item.status === currentStatus;
+      var okSearch = !currentSearch || (item.title || '').toLowerCase().indexOf(currentSearch) !== -1;
+      return okCat && okStatus && okSearch;
+    });
+
+    list.sort(function(a, b){
+      var res = 0;
+      if(currentSort === 'ordem') res = (a.order || 0) - (b.order || 0);
+      else if(currentSort === 'status') res = STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status);
+      else if(currentSort === 'recente') res = (b.addedAt || 0) - (a.addedAt || 0);
+      else if(currentSort === 'nota') res = (b.rating || 0) - (a.rating || 0);
+      else if(currentSort === 'comunidade') res = (b.communityRating || 0) - (a.communityRating || 0);
+      else if(currentSort === 'titulo') res = (a.title || '').localeCompare(b.title || '', 'pt-BR');
+      return res * currentSortDir;
+    });
+
+    if(list.length === 0){
+      tbody.innerHTML = '';
+      tableWrap.hidden = true;
+      emptyMsg.hidden = false;
+      return;
+    }
+    tableWrap.hidden = false;
+    emptyMsg.hidden = true;
+
+    tbody.innerHTML = list.map(function(item, idx){
+      var cat = CATEGORIES[item.category] || CATEGORIES.outro;
+      var coverHtml = item.cover
+        ? '<img src="' + escapeHtml(item.cover) + '" alt="" onerror="this.outerHTML=\'<div class=&quot;cover-placeholder&quot;>' + cat.icon + '</div>\'">'
+        : '<div class="cover-placeholder">' + cat.icon + '</div>';
+
+      var progressHtml = '';
+      if(item.progressTotal){
+        var pct = Math.min(100, Math.round((item.progressCurrent / item.progressTotal) * 100));
+        progressHtml =
+          '<div class="t-progress-row">' +
+            '<button data-act="dec" data-id="' + item.id + '" type="button">−</button>' +
+            '<div class="progress-bar-track"><div class="progress-bar-fill" style="width:' + pct + '%"></div></div>' +
+            '<button data-act="inc" data-id="' + item.id + '" type="button">+</button>' +
+          '</div>' +
+          '<div class="t-progress-label">' + (item.progressCurrent || 0) + ' / ' + item.progressTotal + ' ' + cat.unit + (item.progressTotal >= 2 ? 's' : '') + '</div>';
+      } else {
+        progressHtml =
+          '<div class="t-progress-row">' +
+            '<button data-act="dec" data-id="' + item.id + '" type="button">−</button>' +
+            '<span>' + (item.progressCurrent ? item.progressCurrent + ' ' + cat.unit + (item.progressCurrent >= 2 ? 's' : '') : '—') + '</span>' +
+            '<button data-act="inc" data-id="' + item.id + '" type="button">+</button>' +
+          '</div>';
+      }
+
+      var numControls =
+        '<div class="num-wrap">' +
+          '<input type="number" class="num-input" data-id="' + item.id + '" value="' + (idx + 1) + '" min="1" max="' + list.length + '">' +
+          '<div class="num-arrows">' +
+            '<button data-act="up" data-id="' + item.id + '" type="button" title="Subir na sequência"' + (idx === 0 ? ' disabled' : '') + '>▲</button>' +
+            '<button data-act="down" data-id="' + item.id + '" type="button" title="Descer na sequência"' + (idx === list.length - 1 ? ' disabled' : '') + '>▼</button>' +
+          '</div>' +
+        '</div>';
+
+      return (
+        '<tr>' +
+          '<td class="col-num" data-label="Ordem">' + numControls + '</td>' +
+          '<td class="col-cover" data-label="Capa">' + coverHtml + '</td>' +
+          '<td class="col-title" data-label="Obra"><div class="t-title">' + escapeHtml(item.title) + (item.year ? ' <span class="t-year">(' + item.year + ')</span>' : '') + '</div><div class="t-cat">' + cat.label + '</div>' +
+            (item.duration ? '<div class="t-meta">' + escapeHtml(item.duration) + '</div>' : '') +
+            (item.chaptersTotal ? '<div class="t-meta">' + item.chaptersTotal + ' capítulos</div>' : '') +
+            (item.releaseStatus === 'ongoing' ? '<div class="t-meta" style="color:var(--moss-dark);">📡 Em lançamento</div>' : '') +
+          '</td>' +
+          '<td data-label="Status"><span class="stamp ' + item.status + '">' + STATUS_LABELS[item.status] + '</span></td>' +
+          '<td class="col-progress" data-label="Progresso">' + progressHtml + '</td>' +
+          '<td class="col-community" data-label="Comunidade">' +
+            (item.communityRating != null ? '<span class="community-badge">' + item.communityRating.toFixed(1) + '/10</span>' : '<span class="community-badge empty">—</span>') +
+            (item.refLink ? ' <a href="' + escapeHtml(item.refLink) + '" target="_blank" rel="noopener" class="ref-link" title="Ver avaliação completa">↗</a>' : '') +
+          '</td>' +
+          '<td class="col-rating" data-label="Minha Nota">' + starString(item.rating) + '</td>' +
+          '<td class="col-actions" data-label="Ações">' +
+            '<button data-act="edit" data-id="' + item.id + '" type="button">Editar</button>' +
+            '<button data-act="del" data-id="' + item.id + '" type="button" class="danger">Excluir</button>' +
+          '</td>' +
+        '</tr>'
+      );
+    }).join('');
+
+    // keep a reference to the currently rendered (filtered+sorted) order for reordering
+    renderConsumo._visibleOrder = list.map(function(i){ return i.id; });
+  }
+
+  document.getElementById('consumoTableBody').addEventListener('click', function(e){
+    var btn = e.target.closest('button[data-act]');
+    if(!btn) return;
+    var id = btn.getAttribute('data-id');
+    var act = btn.getAttribute('data-act');
+    var item = consumoItems.find(function(i){ return i.id === id; });
+    if(!item) return;
+
+    if(act === 'inc'){
+      item.progressCurrent = (item.progressCurrent || 0) + 1;
+      if(item.progressTotal && item.progressCurrent >= item.progressTotal){
+        item.progressCurrent = item.progressTotal;
+      }
+      item.status = autoStatus(item.status, item.progressCurrent, item.progressTotal);
+      saveConsumo(consumoItems);
+      renderConsumo();
+    } else if(act === 'dec'){
+      item.progressCurrent = Math.max(0, (item.progressCurrent || 0) - 1);
+      item.status = autoStatus(item.status, item.progressCurrent, item.progressTotal);
+      saveConsumo(consumoItems);
+      renderConsumo();
+    } else if(act === 'edit'){
+      openConsumoModal(item);
+    } else if(act === 'del'){
+      if(confirm('Excluir "' + item.title + '" do seu diário?')){
+        consumoItems = consumoItems.filter(function(i){ return i.id !== id; });
+        deleteObraRemote(id);
+        renderConsumo();
+      }
+    } else if(act === 'up' || act === 'down'){
+      moveInQueue(item, act === 'up' ? -1 : 1);
+    }
+  });
+
+  function moveInQueue(item, dir){
+    var visibleIds = renderConsumo._visibleOrder || [];
+    var idx = visibleIds.indexOf(item.id);
+    var swapIdx = idx + dir;
+    if(idx === -1 || swapIdx < 0 || swapIdx >= visibleIds.length) return;
+    var otherItem = consumoItems.find(function(i){ return i.id === visibleIds[swapIdx]; });
+    if(!otherItem) return;
+    var tmp = item.order || 0;
+    item.order = otherItem.order || 0;
+    otherItem.order = tmp;
+    saveConsumo(consumoItems);
+    currentSort = 'ordem';
+    document.getElementById('sortSelect').value = 'ordem';
+    renderConsumo();
+  }
+
+  function moveToPosition(item, targetPos){
+    var visibleIds = (renderConsumo._visibleOrder || []).slice();
+    var idx = visibleIds.indexOf(item.id);
+    if(idx === -1) return;
+    var targetIdx = Math.max(0, Math.min(visibleIds.length - 1, Math.round(targetPos) - 1));
+    if(targetIdx === idx){ renderConsumo(); return; }
+    visibleIds.splice(idx, 1);
+    visibleIds.splice(targetIdx, 0, item.id);
+    visibleIds.forEach(function(id, i){
+      var it = consumoItems.find(function(x){ return x.id === id; });
+      if(it) it.order = i + 1;
+    });
+    saveConsumo(consumoItems);
+    currentSort = 'ordem';
+    document.getElementById('sortSelect').value = 'ordem';
+    renderConsumo();
+  }
+
+  document.getElementById('consumoTableBody').addEventListener('change', function(e){
+    var input = e.target.closest('.num-input');
+    if(!input) return;
+    var id = input.getAttribute('data-id');
+    var item = consumoItems.find(function(i){ return i.id === id; });
+    if(!item) return;
+    var targetPos = parseInt(input.value, 10);
+    if(!targetPos || targetPos < 1){ renderConsumo(); return; }
+    moveToPosition(item, targetPos);
+  });
+  document.getElementById('consumoTableBody').addEventListener('keydown', function(e){
+    if(e.key === 'Enter' && e.target.classList.contains('num-input')){
+      e.preventDefault();
+      e.target.blur();
+    }
+  });
+
+  // ---------- render: gerais ----------
+  var expandedLogs = {};
+
+  function hobbyStats(h){
+    var sessions = h.sessions || [];
+    var totalMinutes = sessions.reduce(function(sum, s){ return sum + (s.minutes || 0); }, 0);
+    var lastDate = sessions.reduce(function(latest, s){
+      return (!latest || (s.date && s.date > latest)) ? s.date : latest;
+    }, null);
+    return { totalSessions: sessions.length, totalMinutes: totalMinutes, lastDate: lastDate };
+  }
+
+  function formatHours(minutes){
+    minutes = minutes || 0;
+    if(minutes < 60) return minutes + 'min';
+    var h = Math.floor(minutes / 60);
+    var m = minutes % 60;
+    return m ? (h + 'h' + m + 'min') : (h + 'h');
+  }
+
+  function daysAgo(iso){
+    if(!iso) return '';
+    var d1 = new Date(iso + 'T00:00:00');
+    var d2 = new Date();
+    d2.setHours(0,0,0,0);
+    var diff = Math.round((d2 - d1) / 86400000);
+    if(diff <= 0) return 'hoje';
+    if(diff === 1) return 'há 1 dia';
+    return 'há ' + diff + ' dias';
+  }
+
+  function renderGeraisSummary(){
+    var el = document.getElementById('geraisSummary');
+    if(geraisItems.length === 0){ el.textContent = ''; return; }
+    var counts = {};
+    LEVEL_ORDER.forEach(function(l){ counts[l] = 0; });
+    geraisItems.forEach(function(h){ counts[h.level] = (counts[h.level] || 0) + 1; });
+    var parts = [geraisItems.length + (geraisItems.length === 1 ? ' hobby' : ' hobbies')];
+    LEVEL_ORDER.forEach(function(l){
+      if(counts[l] > 0) parts.push(counts[l] + ' ' + LEVEL_LABELS[l].toLowerCase());
+    });
+    el.textContent = parts.join(' · ');
+  }
+
+  function renderGerais(){
+    var grid = document.getElementById('geraisGrid');
+    var emptyMsg = document.getElementById('geraisEmpty');
+
+    renderGeraisSummary();
+
+    if(geraisItems.length === 0){
+      grid.innerHTML = '';
+      emptyMsg.hidden = false;
+      return;
+    }
+    emptyMsg.hidden = true;
+
+    var sorted = geraisItems.slice().sort(function(a, b){
+      if(!!b.focus !== !!a.focus) return (b.focus ? 1 : 0) - (a.focus ? 1 : 0);
+      return (a.order || 0) - (b.order || 0);
+    });
+
+    grid.innerHTML = sorted.map(function(h, idx){
+      var levelIdx = LEVEL_ORDER.indexOf(h.level);
+      var boxesHtml = LEVEL_ORDER.map(function(lvl, i){
+        var cls = 'level-box';
+        if(i <= levelIdx) cls += ' filled';
+        if(i === levelIdx) cls += ' current';
+        return '<div class="' + cls + '" data-id="' + h.id + '" data-level="' + lvl + '">' + LEVEL_LABELS[lvl] + '</div>';
+      }).join('');
+
+      var stats = hobbyStats(h);
+      var ago = daysAgo(stats.lastDate);
+      var statsHtml =
+        '<div class="plaque-stats">' +
+          '<span>' + stats.totalSessions + (stats.totalSessions === 1 ? ' sessão' : ' sessões') + ' · ' + formatHours(stats.totalMinutes) + '</span>' +
+          (ago ? '<span>última: ' + ago + '</span>' : '') +
+        '</div>';
+
+      var nextHtml = h.notes ? '<div class="plaque-next">🎯 ' + escapeHtml(h.notes) + '</div>' : '';
+
+      var sessions = (h.sessions || []).slice();
+      var expanded = !!expandedLogs[h.id];
+      var logHtml = '';
+      if(expanded){
+        logHtml = '<div class="session-log">' + (sessions.length === 0
+          ? '<p class="session-empty">Nenhuma sessão registrada ainda.</p>'
+          : sessions.map(function(s, i){
+              return '<div class="session-entry">' +
+                '<div class="session-entry-main"><span class="session-entry-label">Sessão ' + (i+1) + (s.date ? ' · ' + formatDate(s.date) : '') + (s.minutes ? ' · ' + formatHours(s.minutes) : '') + '</span>' +
+                (s.notes ? '<div class="session-entry-notes">' + escapeHtml(s.notes) + '</div>' : '') +
+                '</div>' +
+                '<button type="button" class="session-entry-del" data-act="delsession" data-id="' + h.id + '" data-sid="' + s.id + '" title="Excluir sessão">✕</button>' +
+              '</div>';
+            }).join('')) + '</div>';
+      }
+
+      return (
+        '<div class="plaque' + (h.focus ? ' is-focus' : '') + '">' +
+          '<div class="plaque-order-arrows">' +
+            '<button data-act="up" data-id="' + h.id + '" type="button" title="Subir"' + (idx === 0 ? ' disabled' : '') + '>▲</button>' +
+            '<button data-act="down" data-id="' + h.id + '" type="button" title="Descer"' + (idx === sorted.length - 1 ? ' disabled' : '') + '>▼</button>' +
+          '</div>' +
+          '<button type="button" class="plaque-focus-btn' + (h.focus ? ' active' : '') + '" data-act="focus" data-id="' + h.id + '" title="Marcar como foco atual">' + (h.focus ? '★' : '☆') + '</button>' +
+          '<div class="plaque-head"><span class="plaque-icon">' + escapeHtml(h.icon || '✨') + '</span><span class="plaque-name">' + escapeHtml(h.name) + '</span></div>' +
+          '<div class="level-track">' + boxesHtml + '</div>' +
+          statsHtml +
+          nextHtml +
+          logHtml +
+          '<div class="plaque-actions">' +
+            '<button data-act="addsession" data-id="' + h.id + '" type="button" class="primary">+ Sessão</button>' +
+            '<button data-act="togglelog" data-id="' + h.id + '" type="button">' + (expanded ? 'Ocultar log' : 'Ver log (' + sessions.length + ')') + '</button>' +
+            '<button data-act="edit" data-id="' + h.id + '" type="button">Editar</button>' +
+            '<button data-act="del" data-id="' + h.id + '" type="button" class="danger">Excluir</button>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+
+    renderGerais._visibleOrder = sorted.map(function(h){ return h.id; });
+  }
+
+  function formatDate(iso){
+    if(!iso) return '';
+    var parts = iso.split('-');
+    if(parts.length !== 3) return iso;
+    return parts[2] + '/' + parts[1] + '/' + parts[0];
+  }
+
+  document.getElementById('geraisGrid').addEventListener('click', function(e){
+    var levelBox = e.target.closest('.level-box');
+    var actBtn = e.target.closest('button[data-act]');
+
+    if(levelBox){
+      var id = levelBox.getAttribute('data-id');
+      var lvl = levelBox.getAttribute('data-level');
+      var h = geraisItems.find(function(i){ return i.id === id; });
+      if(h){
+        h.level = lvl;
+        saveGerais(geraisItems);
+        renderGerais();
+      }
+      return;
+    }
+
+    if(actBtn){
+      var id2 = actBtn.getAttribute('data-id');
+      var act = actBtn.getAttribute('data-act');
+      var h2 = geraisItems.find(function(i){ return i.id === id2; });
+      if(!h2) return;
+
+      if(act === 'edit'){
+        openGeralModal(h2);
+      } else if(act === 'del'){
+        if(confirm('Excluir o hobby "' + h2.name + '"?')){
+          geraisItems = geraisItems.filter(function(i){ return i.id !== id2; });
+          deleteHobbyRemote(id2);
+          renderGerais();
+        }
+      } else if(act === 'focus'){
+        h2.focus = !h2.focus;
+        saveGerais(geraisItems);
+        renderGerais();
+      } else if(act === 'togglelog'){
+        expandedLogs[id2] = !expandedLogs[id2];
+        renderGerais();
+      } else if(act === 'addsession'){
+        openSessionModal(id2);
+      } else if(act === 'delsession'){
+        var sid = actBtn.getAttribute('data-sid');
+        h2.sessions = (h2.sessions || []).filter(function(s){ return s.id !== sid; });
+        saveGerais(geraisItems);
+        renderGerais();
+      } else if(act === 'up' || act === 'down'){
+        var visible = renderGerais._visibleOrder || [];
+        var vIdx = visible.indexOf(id2);
+        var swapIdx = vIdx + (act === 'up' ? -1 : 1);
+        if(vIdx === -1 || swapIdx < 0 || swapIdx >= visible.length) return;
+        var other = geraisItems.find(function(i){ return i.id === visible[swapIdx]; });
+        if(!other) return;
+        var tmp = h2.order || 0;
+        h2.order = other.order || 0;
+        other.order = tmp;
+        saveGerais(geraisItems);
+        renderGerais();
+      }
+    }
+  });
+
+  // ---------- modal: sessão ----------
+  var modalSession = document.getElementById('modalSession');
+  var formSession = document.getElementById('formSession');
+
+  function openSessionModal(hobbyId){
+    formSession.reset();
+    document.getElementById('sHobbyId').value = hobbyId;
+    document.getElementById('sDate').value = new Date().toISOString().slice(0,10);
+    modalSession.hidden = false;
+  }
+  function closeSessionModal(){ modalSession.hidden = true; }
+
+  modalSession.addEventListener('click', function(e){
+    if(e.target.closest('[data-close]') || e.target === modalSession){ closeSessionModal(); }
+  });
+
+  formSession.addEventListener('submit', function(e){
+    e.preventDefault();
+    var hobbyId = document.getElementById('sHobbyId').value;
+    var h = geraisItems.find(function(i){ return i.id === hobbyId; });
+    if(!h) return;
+    var date = document.getElementById('sDate').value || new Date().toISOString().slice(0,10);
+    var minutes = parseInt(document.getElementById('sMinutes').value, 10) || 0;
+    var notes = document.getElementById('sNotes').value.trim();
+    h.sessions = h.sessions || [];
+    h.sessions.push({ id: uid(), date: date, minutes: minutes, notes: notes });
+    expandedLogs[hobbyId] = true;
+    saveGerais(geraisItems);
+    renderGerais();
+    closeSessionModal();
+  });
+
+  // ---------- modal: consumo ----------
+  var modalConsumo = document.getElementById('modalConsumo');
+  var formConsumo = document.getElementById('formConsumo');
+
+  function resetConsumoForm(){
+    formConsumo.reset();
+    document.getElementById('fItemId').value = '';
+    document.getElementById('fCoverPreview').hidden = true;
+    document.getElementById('fCoverPreview').src = '';
+    document.getElementById('fCommunityRating').value = '';
+    document.getElementById('fDuration').value = '';
+    document.getElementById('fYear').value = '';
+    document.getElementById('fRefLink').value = '';
+    document.getElementById('fChaptersTotal').value = '';
+    document.getElementById('fReleaseStatus').value = '';
+    document.getElementById('communityNote').textContent = '';
+    setStars(0);
+    document.getElementById('btnDeleteConsumo').hidden = true;
+    document.getElementById('searchResults').innerHTML = '';
+    document.getElementById('searchStatus').textContent = '';
+    document.getElementById('searchQuery').value = '';
+    switchModalTab('search');
+  }
+
+  function openConsumoModal(item){
+    resetConsumoForm();
+    if(item){
+      document.getElementById('modalConsumoTitle').textContent = 'Editar Obra';
+      document.getElementById('fItemId').value = item.id;
+      document.getElementById('fTitle').value = item.title || '';
+      document.getElementById('fCategory').value = item.category || 'outro';
+      document.getElementById('fCover').value = item.cover || '';
+      if(item.cover){
+        document.getElementById('fCoverPreview').src = item.cover;
+        document.getElementById('fCoverPreview').hidden = false;
+      }
+      document.getElementById('fStatus').value = item.status || 'fila';
+      document.getElementById('fCommunityRating').value = (item.communityRating != null) ? item.communityRating : '';
+      document.getElementById('fDuration').value = item.duration || '';
+      document.getElementById('fYear').value = item.year || '';
+      document.getElementById('fRefLink').value = item.refLink || '';
+      document.getElementById('fProgressCurrent').value = item.progressCurrent || 0;
+      document.getElementById('fProgressTotal').value = item.progressTotal || '';
+      document.getElementById('fChaptersTotal').value = item.chaptersTotal || '';
+      document.getElementById('fReleaseStatus').value = item.releaseStatus || '';
+      document.getElementById('fNotes').value = item.notes || '';
+      setStars(item.rating || 0);
+      document.getElementById('btnDeleteConsumo').hidden = false;
+      switchModalTab('manual');
+    } else {
+      document.getElementById('modalConsumoTitle').textContent = 'Nova Obra';
+    }
+    updateProgressLabel();
+    modalConsumo.hidden = false;
+  }
+
+  function closeConsumoModal(){ modalConsumo.hidden = true; }
+
+  document.getElementById('btnAddConsumo').addEventListener('click', function(){ openConsumoModal(null); });
+
+  modalConsumo.addEventListener('click', function(e){
+    if(e.target.closest('[data-close]') || e.target === modalConsumo){ closeConsumoModal(); }
+  });
+
+  document.querySelectorAll('#modalConsumo .modal-tab').forEach(function(btn){
+    btn.addEventListener('click', function(){ switchModalTab(btn.getAttribute('data-mtab')); });
+  });
+
+  function switchModalTab(name){
+    document.querySelectorAll('#modalConsumo .modal-tab').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-mtab') === name);
+    });
+    document.getElementById('mtab-search').classList.toggle('active', name === 'search');
+    formConsumo.classList.toggle('active', name === 'manual');
+  }
+
+  document.getElementById('fCategory').addEventListener('change', updateProgressLabel);
+  function updateProgressLabel(){
+    var cat = CATEGORIES[document.getElementById('fCategory').value] || CATEGORIES.outro;
+    document.getElementById('fProgressCurrentLabel').textContent = cat.currentLabel;
+    document.getElementById('fProgressTotalLabel').textContent = cat.totalLabel;
+    document.getElementById('fDurationWrap').hidden = !cat.showDuration;
+    if(cat.showDuration){
+      document.getElementById('fDurationLabel').textContent = cat.durationLabel;
+    }
+    document.getElementById('fChaptersWrap').hidden = !cat.showChapters;
+    document.getElementById('fReleaseStatusWrap').hidden = !cat.showReleaseFlag;
+    document.getElementById('btnOpenHLTB').hidden = !cat.showHLTB;
+  }
+
+  document.getElementById('btnOpenHLTB').addEventListener('click', function(){
+    var title = document.getElementById('fTitle').value.trim();
+    if(!title) return;
+    window.open('https://howlongtobeat.com/?q=' + encodeURIComponent(title), '_blank', 'noopener');
+  });
+
+  document.getElementById('fCover').addEventListener('input', function(e){
+    var preview = document.getElementById('fCoverPreview');
+    if(e.target.value){
+      preview.src = e.target.value;
+      preview.hidden = false;
+    } else {
+      preview.hidden = true;
+    }
+  });
+
+  // star input
+  var fStars = document.getElementById('fStars');
+  function setStars(value){
+    fStars.setAttribute('data-value', value);
+    var chars = fStars.querySelectorAll ? null : null;
+    var html = '';
+    for(var i = 1; i <= 5; i++){
+      html += '<span data-star="' + i + '" class="' + (i <= value ? 'on' : '') + '">' + (i <= value ? '★' : '☆') + '</span>';
+    }
+    fStars.innerHTML = html;
+  }
+  setStars(0);
+  fStars.addEventListener('click', function(e){
+    var span = e.target.closest('[data-star]');
+    if(!span) return;
+    var val = parseInt(span.getAttribute('data-star'), 10);
+    var current = parseInt(fStars.getAttribute('data-value'), 10);
+    setStars(val === current ? 0 : val);
+  });
+
+  formConsumo.addEventListener('submit', function(e){
+    e.preventDefault();
+    var id = document.getElementById('fItemId').value;
+    var title = document.getElementById('fTitle').value.trim();
+    if(!title) return;
+
+    var category = document.getElementById('fCategory').value;
+    var cover = document.getElementById('fCover').value.trim();
+    var status = document.getElementById('fStatus').value;
+    var communityRatingRaw = document.getElementById('fCommunityRating').value;
+    var communityRating = communityRatingRaw !== '' ? parseFloat(communityRatingRaw) : null;
+    var duration = document.getElementById('fDuration').value.trim();
+    var progressCurrent = parseInt(document.getElementById('fProgressCurrent').value, 10) || 0;
+    var progressTotalRaw = document.getElementById('fProgressTotal').value;
+    var progressTotal = progressTotalRaw ? parseInt(progressTotalRaw, 10) : null;
+    var chaptersTotalRaw = document.getElementById('fChaptersTotal').value;
+    var chaptersTotal = chaptersTotalRaw ? parseInt(chaptersTotalRaw, 10) : null;
+    var releaseStatus = document.getElementById('fReleaseStatus').value || null;
+    var yearRaw = document.getElementById('fYear').value;
+    var year = yearRaw ? parseInt(yearRaw, 10) : null;
+    var refLink = document.getElementById('fRefLink').value.trim();
+    var notes = document.getElementById('fNotes').value.trim();
+    var rating = parseInt(fStars.getAttribute('data-value'), 10) || 0;
+
+    status = autoStatus(status, progressCurrent, progressTotal);
+
+    if(id){
+      var item = consumoItems.find(function(i){ return i.id === id; });
+      if(item){
+        item.title = title;
+        item.category = category;
+        item.cover = cover;
+        item.status = status;
+        item.communityRating = communityRating;
+        item.duration = duration;
+        item.progressCurrent = progressCurrent;
+        item.progressTotal = progressTotal;
+        item.chaptersTotal = chaptersTotal;
+        item.releaseStatus = releaseStatus;
+        item.year = year;
+        item.refLink = refLink;
+        item.notes = notes;
+        item.rating = rating;
+      }
+    } else {
+      var maxOrder = consumoItems
+        .reduce(function(m, i){ return Math.max(m, i.order || 0); }, 0);
+      consumoItems.push({
+        id: uid(),
+        title: title,
+        category: category,
+        cover: cover,
+        status: status,
+        communityRating: communityRating,
+        duration: duration,
+        progressCurrent: progressCurrent,
+        progressTotal: progressTotal,
+        chaptersTotal: chaptersTotal,
+        releaseStatus: releaseStatus,
+        year: year,
+        refLink: refLink,
+        notes: notes,
+        rating: rating,
+        order: maxOrder + 1,
+        addedAt: Date.now()
+      });
+    }
+    saveConsumo(consumoItems);
+    renderConsumo();
+    closeConsumoModal();
+  });
+
+  document.getElementById('btnDeleteConsumo').addEventListener('click', function(){
+    var id = document.getElementById('fItemId').value;
+    var item = consumoItems.find(function(i){ return i.id === id; });
+    if(item && confirm('Excluir "' + item.title + '"?')){
+      consumoItems = consumoItems.filter(function(i){ return i.id !== id; });
+      deleteObraRemote(id);
+      renderConsumo();
+      closeConsumoModal();
+    }
+  });
+
+  // ---------- busca na web ----------
+  document.getElementById('btnSearch').addEventListener('click', runSearch);
+  document.getElementById('searchQuery').addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); runSearch(); }
+  });
+
+  var searchCategoryEl = document.getElementById('searchCategory');
+  var rawgKeyBox = document.getElementById('rawgKeyBox');
+  var rawgKeyMissing = document.getElementById('rawgKeyMissing');
+  var rawgKeyOk = document.getElementById('rawgKeyOk');
+  var rawgKeyInputRow = document.getElementById('rawgKeyInputRow');
+  var rawgKeyInput = document.getElementById('rawgKeyInput');
+
+  function updateRawgKeyBox(){
+    var isJogo = searchCategoryEl.value === 'jogo';
+    rawgKeyBox.hidden = !isJogo;
+    if(!isJogo) return;
+    var hasKey = !!getRawgKey();
+    rawgKeyMissing.hidden = hasKey;
+    rawgKeyOk.hidden = !hasKey;
+    rawgKeyInputRow.hidden = hasKey;
+  }
+  searchCategoryEl.addEventListener('change', updateRawgKeyBox);
+  updateRawgKeyBox();
+
+  document.getElementById('btnRawgKeySave').addEventListener('click', function(){
+    var key = rawgKeyInput.value.trim();
+    if(!key) return;
+    localStorage.setItem(RAWG_KEY_STORAGE, key);
+    rawgKeyInput.value = '';
+    updateRawgKeyBox();
+  });
+  document.getElementById('btnRawgKeyClear').addEventListener('click', function(){
+    localStorage.removeItem(RAWG_KEY_STORAGE);
+    updateRawgKeyBox();
+  });
+
+  var tmdbKeyBox = document.getElementById('tmdbKeyBox');
+  var tmdbKeyMissing = document.getElementById('tmdbKeyMissing');
+  var tmdbKeyOk = document.getElementById('tmdbKeyOk');
+  var tmdbKeyInputRow = document.getElementById('tmdbKeyInputRow');
+  var tmdbKeyInput = document.getElementById('tmdbKeyInput');
+
+  function updateTmdbKeyBox(){
+    var isRelevant = (searchCategoryEl.value === 'filme' || searchCategoryEl.value === 'serie');
+    tmdbKeyBox.hidden = !isRelevant;
+    if(!isRelevant) return;
+    var hasKey = !!getTmdbKey();
+    tmdbKeyMissing.hidden = hasKey;
+    tmdbKeyOk.hidden = !hasKey;
+    tmdbKeyInputRow.hidden = hasKey;
+  }
+  searchCategoryEl.addEventListener('change', updateTmdbKeyBox);
+  updateTmdbKeyBox();
+
+  document.getElementById('btnTmdbKeySave').addEventListener('click', function(){
+    var key = tmdbKeyInput.value.trim();
+    if(!key) return;
+    localStorage.setItem(TMDB_KEY_STORAGE, key);
+    tmdbKeyInput.value = '';
+    updateTmdbKeyBox();
+  });
+  document.getElementById('btnTmdbKeyClear').addEventListener('click', function(){
+    localStorage.removeItem(TMDB_KEY_STORAGE);
+    updateTmdbKeyBox();
+  });
+
+  function runSearch(){
+    var cat = document.getElementById('searchCategory').value;
+    var query = document.getElementById('searchQuery').value.trim();
+    var statusEl = document.getElementById('searchStatus');
+    var resultsEl = document.getElementById('searchResults');
+
+    if(!query){ statusEl.textContent = 'Digite algo pra buscar.'; return; }
+
+    statusEl.textContent = 'Buscando...';
+    resultsEl.innerHTML = '';
+
+    var searchFn = { serie: searchSerieUnified, filme: searchFilme, livro: searchOpenLibrary, manga: searchManga, anime: searchAnime, jogo: searchJogo }[cat];
+    if(!searchFn){ statusEl.textContent = 'Categoria sem busca automática — preencha na aba "manualmente".'; return; }
+
+    searchFn(query).then(function(results){
+      if(!results.length){
+        statusEl.textContent = 'Nada encontrado (já tentei o termo original, sem acentos e traduzido). Tente o título original/em inglês, confira a categoria ou preencha manualmente.';
+        return;
+      }
+      statusEl.textContent = results.length + ' resultado(s):';
+      resultsEl.innerHTML = results.map(function(r, i){
+        var img = r.cover ? '<img src="' + escapeHtml(r.cover) + '" alt="">' : '<div style="width:40px;height:56px;display:flex;align-items:center;justify-content:center;background:#d8c79e;border-radius:2px;">' + (CATEGORIES[cat] ? CATEGORIES[cat].icon : '✨') + '</div>';
+        return (
+          '<div class="search-result-item" data-idx="' + i + '">' +
+            img +
+            '<div class="sri-text">' + escapeHtml(r.title) + (r.subtitle ? '<div class="sri-sub">' + escapeHtml(r.subtitle) + '</div>' : '') + '</div>' +
+          '</div>'
+        );
+      }).join('');
+
+      resultsEl.querySelectorAll('.search-result-item').forEach(function(el){
+        el.addEventListener('click', function(){
+          var idx = parseInt(el.getAttribute('data-idx'), 10);
+          var r = results[idx];
+          statusEl.textContent = 'Buscando nota, duração e quantidade...';
+          enrichResult(cat, r).then(function(enriched){
+            fillFormFromResult(cat, enriched);
+            switchModalTab('manual');
+            statusEl.textContent = results.length + ' resultado(s) — dados preenchidos, revise antes de salvar.';
+          }).catch(function(){
+            fillFormFromResult(cat, r);
+            switchModalTab('manual');
+            statusEl.textContent = 'Preenchi o que consegui. Complete o resto manualmente.';
+          });
+        });
+      });
+    }).catch(function(err){
+      statusEl.textContent = 'Não foi possível buscar agora (' + (err && err.message ? err.message : 'erro de rede') + '). Preencha manualmente.';
+    });
+  }
+
+  function fillFormFromResult(cat, r){
+    document.getElementById('fTitle').value = r.title;
+    document.getElementById('fCategory').value = cat;
+    document.getElementById('fCover').value = r.cover || '';
+    if(r.cover){
+      document.getElementById('fCoverPreview').src = r.cover;
+      document.getElementById('fCoverPreview').hidden = false;
+    }
+    var extra = r.extra || {};
+    document.getElementById('fCommunityRating').value = (extra.communityRating != null) ? extra.communityRating : '';
+    document.getElementById('fDuration').value = extra.duration || '';
+    document.getElementById('fYear').value = extra.year || '';
+    document.getElementById('fRefLink').value = extra.refLink || '';
+    if(extra.total){
+      document.getElementById('fProgressTotal').value = extra.total;
+    }
+    document.getElementById('fReleaseStatus').value = extra.releaseStatus || '';
+    var noteEl = document.getElementById('communityNote');
+    noteEl.textContent = extra.note || '';
+    updateProgressLabel();
+  }
+
+  // Fetches richer per-item data (community rating, duration, total count) for the
+  // selected search result. Each category uses whatever free, no-key source can provide it;
+  // where no reliable free source exists, that field is left blank for manual entry.
+  function enrichResult(cat, r){
+    if(cat === 'serie'){ return (r.source === 'tmdb-tv') ? enrichSerieTMDB(r) : enrichSerie(r); }
+    if(cat === 'livro') return enrichLivro(r);
+    if(cat === 'filme') return (r.source === 'tmdb') ? enrichFilme(r) : Promise.resolve(r);
+    if(cat === 'manga' || cat === 'anime') return Promise.resolve(r); // AniList já traz tudo na busca
+    if(cat === 'jogo') return Promise.resolve(r); // no free no-key source for playtime
+    return Promise.resolve(r);
+  }
+
+  function enrichSerieTMDB(r){
+    var key = getTmdbKey();
+    if(!key || !r.id) return Promise.resolve(r);
+    return fetch('https://api.themoviedb.org/3/tv/' + r.id + '?api_key=' + encodeURIComponent(key) + '&language=pt-BR')
+      .then(function(res){ if(!res.ok) throw new Error('falha'); return res.json(); })
+      .then(function(data){
+        var extra = r.extra || {};
+        if(data){
+          if(data.number_of_episodes){ extra.total = data.number_of_episodes; }
+          if(data.episode_run_time && data.episode_run_time.length){
+            extra.duration = data.episode_run_time[0] + ' min/episódio';
+          }
+          if(data.status){
+            extra.releaseStatus = (data.status === 'Ended' || data.status === 'Canceled') ? 'finished' : 'ongoing';
+          }
+        }
+        r.extra = extra;
+        return r;
+      })
+      .catch(function(){ return r; });
+  }
+
+  function enrichSerie(r){
+    if(!r.id) return Promise.resolve(r);
+    return fetch('https://api.tvmaze.com/shows/' + r.id + '?embed=episodes')
+      .then(function(res){ if(!res.ok) throw new Error('falha'); return res.json(); })
+      .then(function(show){
+        var extra = r.extra || {};
+        extra.communityRating = (show.rating && show.rating.average != null) ? show.rating.average : null;
+        var runtime = show.averageRuntime || show.runtime;
+        extra.duration = runtime ? (runtime + ' min/episódio') : '';
+        var eps = show._embedded && show._embedded.episodes;
+        if(eps && eps.length){ extra.total = eps.length; }
+        if(show.status){ extra.releaseStatus = (show.status === 'Ended') ? 'finished' : 'ongoing'; }
+        r.extra = extra;
+        return r;
+      })
+      .catch(function(){ return r; });
+  }
+
+  function enrichFilme(r){
+    var key = getTmdbKey();
+    if(!key || !r.id) return Promise.resolve(r);
+    return fetch('https://api.themoviedb.org/3/movie/' + r.id + '?api_key=' + encodeURIComponent(key) + '&language=pt-BR')
+      .then(function(res){ if(!res.ok) throw new Error('falha'); return res.json(); })
+      .then(function(data){
+        var extra = r.extra || {};
+        if(data && data.runtime){ extra.total = data.runtime; }
+        r.extra = extra;
+        return r;
+      })
+      .catch(function(){ return r; });
+  }
+
+  function enrichLivro(r){
+    var olRating = r.workKey
+      ? fetch('https://openlibrary.org' + r.workKey + '/ratings.json')
+          .then(function(res){ return res.ok ? res.json() : null; })
+          .then(function(data){
+            return (data && data.summary && data.summary.average) ? Math.round(data.summary.average * 2 * 10) / 10 : null; // 0-5 -> 0-10
+          })
+          .catch(function(){ return null; })
+      : Promise.resolve(null);
+
+    // Open Library raramente tem avaliação E às vezes não tem nº de páginas
+    // na busca — o Google Books cobre bem os dois, então sempre consultamos
+    // como complemento e preenchemos só o que estiver faltando.
+    var gBooks = fetch('https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(r.title))
+      .then(function(res){ return res.ok ? res.json() : null; })
+      .then(function(data){ return (data && data.items && data.items[0] && data.items[0].volumeInfo) || null; })
+      .catch(function(){ return null; });
+
+    return Promise.all([olRating, gBooks]).then(function(results){
+      var rating = results[0];
+      var gInfo = results[1];
+      var extra = r.extra || {};
+      extra.communityRating = (rating != null) ? rating : ((gInfo && gInfo.averageRating) ? Math.round(gInfo.averageRating * 2 * 10) / 10 : null);
+      if(!extra.total && gInfo && gInfo.pageCount){
+        extra.total = gInfo.pageCount;
+      }
+      r.extra = extra;
+      return r;
+    });
+  }
+
+  function searchTVMaze(query){
+    return trySearchWithFallbacks(fetchTVMaze, query);
+  }
+
+  function fetchTVMaze(query){
+    return fetch('https://api.tvmaze.com/search/shows?q=' + encodeURIComponent(query))
+      .then(function(res){ if(!res.ok) throw new Error('falha na busca'); return res.json(); })
+      .then(function(data){
+        return data.map(function(d){
+          var show = d.show;
+          return {
+            id: show.id,
+            title: show.name,
+            cover: show.image ? show.image.medium : '',
+            subtitle: [show.premiered ? show.premiered.slice(0,4) : null, show.status].filter(Boolean).join(' · '),
+            extra: {
+              communityRating: (show.rating && show.rating.average != null) ? show.rating.average : null,
+              duration: (show.averageRuntime || show.runtime) ? (show.averageRuntime || show.runtime) + ' min/episódio' : '',
+              releaseStatus: show.status ? (show.status === 'Ended' ? 'finished' : 'ongoing') : null,
+              year: show.premiered ? parseInt(show.premiered.slice(0,4), 10) : null,
+              refLink: show.url || ''
+            }
+          };
+        });
+      });
+  }
+
+  function stripAccents(str){
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  // Free, no-key translation lookup — used as a last-resort fallback when a Portuguese
+  // title doesn't match a catalog that's indexed mostly in English (MyAnimeList, TVMaze).
+  function translateToEnglish(query){
+    return fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(query) + '&langpair=pt-BR|en')
+      .then(function(res){ return res.ok ? res.json() : null; })
+      .then(function(data){
+        var translated = data && data.responseData && data.responseData.translatedText;
+        return (translated && translated.toLowerCase().trim() !== query.toLowerCase().trim()) ? translated : null;
+      })
+      .catch(function(){ return null; });
+  }
+
+  // Tries a search function with the query as typed; if nothing comes back, retries
+  // without accents, and finally retries with an English translation of the query.
+  function trySearchWithFallbacks(fetchOnce, query){
+    return fetchOnce(query).then(function(results){
+      if(results.length) return results;
+      var stripped = stripAccents(query);
+      var attempt2 = (stripped !== query) ? fetchOnce(stripped) : Promise.resolve([]);
+      return attempt2.then(function(results2){
+        if(results2.length) return results2;
+        return translateToEnglish(query).then(function(translated){
+          if(!translated) return [];
+          return fetchOnce(translated);
+        });
+      });
+    });
+  }
+  function fetchItunes(query, country){
+    return fetch('https://itunes.apple.com/search?term=' + encodeURIComponent(query) + '&media=movie&country=' + country + '&limit=20')
+      .then(function(res){ if(!res.ok) throw new Error('falha na busca'); return res.json(); })
+      .then(function(data){ return data.results || []; })
+      .catch(function(){ return []; });
+  }
+
+  function searchFilme(query){
+    var tmdbKey = getTmdbKey();
+    if(tmdbKey){
+      return trySearchWithFallbacks(function(q){ return fetchTMDB(q, tmdbKey); }, query);
+    }
+    return searchITunesMovies(query);
+  }
+
+  function fetchTMDB(query, key){
+    return fetch('https://api.themoviedb.org/3/search/movie?api_key=' + encodeURIComponent(key) + '&query=' + encodeURIComponent(query) + '&language=pt-BR&include_adult=false')
+      .then(function(res){ if(!res.ok) throw new Error('falha na busca TMDB'); return res.json(); })
+      .then(function(data){
+        return (data.results || []).map(function(m){
+          return {
+            id: m.id,
+            source: 'tmdb',
+            title: m.title,
+            cover: m.poster_path ? 'https://image.tmdb.org/t/p/w342' + m.poster_path : '',
+            subtitle: m.release_date ? m.release_date.slice(0,4) : '',
+            extra: {
+              communityRating: m.vote_average ? Math.round(m.vote_average * 10) / 10 : null,
+              total: null,
+              year: m.release_date ? parseInt(m.release_date.slice(0,4), 10) : null,
+              refLink: 'https://www.themoviedb.org/movie/' + m.id
+            }
+          };
+        });
+      });
+  }
+
+  function searchITunesMovies(query){
+    // Fallback quando não há chave TMDB: checa a loja brasileira (títulos localizados,
+    // ex: "Velozes e Furiosos") mesclada com a americana, sem duplicatas.
+    function baseAttempt(q){
+      return fetchItunes(q, 'br').then(function(brResults){
+        return fetchItunes(q, 'us').then(function(usResults){
+          return mapItunesResults(brResults.concat(usResults));
+        });
+      });
+    }
+    return trySearchWithFallbacks(baseAttempt, query);
+  }
+
+  function mapItunesResults(rawResults){
+    var seen = {};
+    var mapped = [];
+    rawResults.forEach(function(r){
+      if(!r.trackId || seen[r.trackId]) return;
+      seen[r.trackId] = true;
+      var minutes = r.trackTimeMillis ? Math.round(r.trackTimeMillis / 60000) : null;
+      mapped.push({
+        title: r.trackName,
+        cover: r.artworkUrl100 ? r.artworkUrl100.replace('100x100', '300x300') : '',
+        subtitle: [r.releaseDate ? r.releaseDate.slice(0,4) : null, r.primaryGenreName].filter(Boolean).join(' · '),
+        extra: {
+          communityRating: null,
+          total: minutes,
+          year: r.releaseDate ? parseInt(r.releaseDate.slice(0,4), 10) : null,
+          refLink: r.trackViewUrl || '',
+          note: 'Busca via iTunes (sem chave TMDB) — cobertura menor e sem nota. Cole uma chave TMDB acima pra melhorar isso.'
+        }
+      });
+    });
+    return mapped.slice(0, 20);
+  }
+
+  // ---------- séries: TMDB (mesma chave dos filmes) com TVMaze como alternativa sem chave ----------
+  function searchSerieUnified(query){
+    var tmdbKey = getTmdbKey();
+    if(tmdbKey){
+      return trySearchWithFallbacks(function(q){ return fetchTMDBTv(q, tmdbKey); }, query);
+    }
+    return searchTVMaze(query);
+  }
+
+  function fetchTMDBTv(query, key){
+    return fetch('https://api.themoviedb.org/3/search/tv?api_key=' + encodeURIComponent(key) + '&query=' + encodeURIComponent(query) + '&language=pt-BR&include_adult=false')
+      .then(function(res){ if(!res.ok) throw new Error('falha na busca TMDB'); return res.json(); })
+      .then(function(data){
+        return (data.results || []).map(function(s){
+          return {
+            id: s.id,
+            source: 'tmdb-tv',
+            title: s.name,
+            cover: s.poster_path ? 'https://image.tmdb.org/t/p/w342' + s.poster_path : '',
+            subtitle: s.first_air_date ? s.first_air_date.slice(0,4) : '',
+            extra: {
+              communityRating: s.vote_average ? Math.round(s.vote_average * 10) / 10 : null,
+              total: null,
+              duration: '',
+              year: s.first_air_date ? parseInt(s.first_air_date.slice(0,4), 10) : null,
+              refLink: 'https://www.themoviedb.org/tv/' + s.id
+            }
+          };
+        });
+      });
+  }
+
+  function searchOpenLibrary(query){
+    return trySearchWithFallbacks(fetchOpenLibrary, query);
+  }
+
+  function fetchOpenLibrary(query){
+    return fetch('https://openlibrary.org/search.json?q=' + encodeURIComponent(query) + '&limit=12')
+      .then(function(res){ if(!res.ok) throw new Error('falha na busca'); return res.json(); })
+      .then(function(data){
+        return data.docs.map(function(b){
+          return {
+            workKey: b.key || '',
+            title: b.title + (b.author_name && b.author_name[0] ? ' — ' + b.author_name[0] : ''),
+            cover: b.cover_i ? 'https://covers.openlibrary.org/b/id/' + b.cover_i + '-M.jpg' : '',
+            subtitle: [b.first_publish_year, b.number_of_pages_median ? b.number_of_pages_median + ' pág.' : null].filter(Boolean).join(' · '),
+            extra: {
+              total: b.number_of_pages_median || null,
+              communityRating: null,
+              year: b.first_publish_year || null,
+              refLink: b.key ? ('https://openlibrary.org' + b.key) : ''
+            }
+          };
+        });
+      });
+  }
+
+  function searchManga(query){
+    return trySearchWithFallbacks(function(q){ return fetchAniList(q, 'MANGA'); }, query);
+  }
+  function searchAnime(query){
+    return trySearchWithFallbacks(function(q){ return fetchAniList(q, 'ANIME'); }, query);
+  }
+
+  function fetchAniList(query, type){
+    var gql = 'query($search:String){ Page(perPage:12){ media(search:$search, type:' + type + ', sort:SEARCH_MATCH, isAdult:false){ ' +
+      'id title{ romaji english } coverImage{ large } chapters volumes episodes duration averageScore startDate{ year } status } } }';
+    return fetch('https://graphql.anilist.co', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ query: gql, variables: { search: query } })
+    })
+      .then(function(res){ if(!res.ok) throw new Error('falha na busca AniList'); return res.json(); })
+      .then(function(data){
+        var list = (data.data && data.data.Page && data.data.Page.media) || [];
+        return list.map(function(m){
+          var title = (m.title && (m.title.english || m.title.romaji)) || '';
+          var rating = (m.averageScore != null) ? Math.round(m.averageScore / 10 * 10) / 10 : null;
+          var cover = m.coverImage ? m.coverImage.large : '';
+          var year = m.startDate && m.startDate.year;
+          var releaseStatus = (m.status === 'RELEASING' || m.status === 'HIATUS') ? 'ongoing' : (m.status === 'FINISHED' ? 'finished' : null);
+          var refLink = m.id ? ('https://anilist.co/' + (type === 'MANGA' ? 'manga' : 'anime') + '/' + m.id) : '';
+          if(type === 'MANGA'){
+            return {
+              title: title,
+              cover: cover,
+              subtitle: [year, m.chapters ? m.chapters + ' caps.' : 'em andamento'].filter(Boolean).join(' · '),
+              extra: { total: m.chapters || null, communityRating: rating, releaseStatus: releaseStatus, year: year || null, refLink: refLink }
+            };
+          }
+          return {
+            title: title,
+            cover: cover,
+            subtitle: [year, m.episodes ? m.episodes + ' eps.' : 'em andamento'].filter(Boolean).join(' · '),
+            extra: {
+              total: m.episodes || null,
+              communityRating: rating,
+              duration: m.duration ? (m.duration + ' min/episódio') : '',
+              releaseStatus: releaseStatus,
+              year: year || null,
+              refLink: refLink
+            }
+          };
+        });
+      });
+  }
+
+  function searchJogo(query){
+    var rawgKey = getRawgKey();
+    if(rawgKey){
+      return trySearchWithFallbacks(function(q){ return fetchRawg(q, rawgKey); }, query);
+    }
+    return searchCheapShark(query);
+  }
+
+  function fetchRawg(query, key){
+    return fetch('https://api.rawg.io/api/games?key=' + encodeURIComponent(key) + '&search=' + encodeURIComponent(query) + '&page_size=12')
+      .then(function(res){ if(!res.ok) throw new Error('falha na busca RAWG'); return res.json(); })
+      .then(function(data){
+        return (data.results || []).map(function(g){
+          var communityRating = null;
+          if(g.metacritic != null){ communityRating = Math.round(g.metacritic / 10 * 10) / 10; }
+          else if(g.rating){ communityRating = Math.round(g.rating * 2 * 10) / 10; }
+          return {
+            title: g.name,
+            cover: g.background_image || '',
+            subtitle: [g.released ? g.released.slice(0,4) : null, (g.genres || []).map(function(x){ return x.name; }).slice(0,2).join(', ')].filter(Boolean).join(' · '),
+            extra: {
+              communityRating: communityRating,
+              duration: '',
+              year: g.released ? parseInt(g.released.slice(0,4), 10) : null,
+              refLink: g.slug ? ('https://rawg.io/games/' + g.slug) : '',
+              note: 'Nota puxada da RAWG/Metacritic. Pra duração, use o botão "Ver tempo no HowLongToBeat" abaixo — é mais confiável que a média de tempo jogado.'
+            }
+          };
+        });
+      });
+  }
+
+  function searchCheapShark(query){
+    return trySearchWithFallbacks(fetchCheapShark, query);
+  }
+
+  function fetchCheapShark(query){
+    return fetch('https://www.cheapshark.com/api/1.0/games?title=' + encodeURIComponent(query) + '&limit=12')
+      .then(function(res){ if(!res.ok) throw new Error('falha na busca'); return res.json(); })
+      .then(function(data){
+        return data.map(function(g){
+          return {
+            title: g.external,
+            cover: g.thumb || '',
+            subtitle: g.cheapest ? 'menor preço encontrado: US$ ' + g.cheapest : '',
+            extra: {
+              communityRating: null,
+              duration: '',
+              note: 'Sem chave RAWG configurada — a CheapShark só compara preços. Cole uma chave grátis da RAWG acima pra puxar nota e tempo de zerar automaticamente, ou preencha manualmente.'
+            }
+          };
+        });
+      });
+  }
+
+  // ---------- modal: geral ----------
+  var modalGeral = document.getElementById('modalGeral');
+  var formGeral = document.getElementById('formGeral');
+  var gLevelTrack = document.getElementById('gLevelTrack');
+
+  function resetGeralForm(){
+    formGeral.reset();
+    document.getElementById('gItemId').value = '';
+    document.getElementById('gIcon').value = '🥋';
+    setLevel('nao_iniciado');
+    document.getElementById('btnDeleteGeral').hidden = true;
+  }
+
+  function setLevel(level){
+    gLevelTrack.setAttribute('data-value', level);
+    var idx = LEVEL_ORDER.indexOf(level);
+    gLevelTrack.querySelectorAll('.level-box').forEach(function(box, i){
+      box.classList.toggle('filled', i <= idx);
+    });
+  }
+
+  gLevelTrack.addEventListener('click', function(e){
+    var box = e.target.closest('.level-box');
+    if(!box) return;
+    setLevel(box.getAttribute('data-level'));
+  });
+
+  function openGeralModal(h){
+    resetGeralForm();
+    if(h){
+      document.getElementById('modalGeralTitle').textContent = 'Editar Hobby';
+      document.getElementById('gItemId').value = h.id;
+      document.getElementById('gIcon').value = h.icon || '🥋';
+      document.getElementById('gName').value = h.name || '';
+      document.getElementById('gNotes').value = h.notes || '';
+      setLevel(h.level || 'nao_iniciado');
+      document.getElementById('btnDeleteGeral').hidden = false;
+    } else {
+      document.getElementById('modalGeralTitle').textContent = 'Novo Hobby';
+    }
+    modalGeral.hidden = false;
+  }
+
+  function closeGeralModal(){ modalGeral.hidden = true; }
+
+  document.getElementById('btnAddGeral').addEventListener('click', function(){ openGeralModal(null); });
+
+  modalGeral.addEventListener('click', function(e){
+    if(e.target.closest('[data-close]') || e.target === modalGeral){ closeGeralModal(); }
+  });
+
+  formGeral.addEventListener('submit', function(e){
+    e.preventDefault();
+    var id = document.getElementById('gItemId').value;
+    var name = document.getElementById('gName').value.trim();
+    if(!name) return;
+    var icon = document.getElementById('gIcon').value.trim() || '✨';
+    var level = gLevelTrack.getAttribute('data-value') || 'nao_iniciado';
+    var notes = document.getElementById('gNotes').value.trim();
+
+    if(id){
+      var h = geraisItems.find(function(i){ return i.id === id; });
+      if(h){
+        h.name = name; h.icon = icon; h.level = level; h.notes = notes;
+      }
+    } else {
+      var maxOrder = geraisItems.reduce(function(m, i){ return Math.max(m, i.order || 0); }, 0);
+      geraisItems.push({ id: uid(), name: name, icon: icon, level: level, notes: notes, focus: false, order: maxOrder + 1, sessions: [] });
+    }
+    saveGerais(geraisItems);
+    renderGerais();
+    closeGeralModal();
+  });
+
+  document.getElementById('btnDeleteGeral').addEventListener('click', function(){
+    var id = document.getElementById('gItemId').value;
+    var h = geraisItems.find(function(i){ return i.id === id; });
+    if(h && confirm('Excluir o hobby "' + h.name + '"?')){
+      geraisItems = geraisItems.filter(function(i){ return i.id !== id; });
+      deleteHobbyRemote(id);
+      renderGerais();
+      closeGeralModal();
+    }
+  });
+
+  // ---------- close modals on Escape ----------
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){
+      closeConsumoModal();
+      closeGeralModal();
+    }
+  });
+
+  // ---------- código de sincronização ----------
+  var CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // sem 0/O/1/I/L pra evitar confusão
+  function generateCode(){
+    var part = function(){
+      var s = '';
+      for(var i = 0; i < 4; i++){ s += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]; }
+      return s;
+    };
+    return part() + '-' + part();
+  }
+
+  var authOverlay = document.getElementById('authOverlay');
+  var userBar = document.getElementById('userBar');
+  var codeLabel = document.getElementById('codeLabel');
+  var generatedCodeEl = document.getElementById('generatedCode');
+  var authStatus = document.getElementById('authStatus');
+  var formEnterCode = document.getElementById('formEnterCode');
+  var enterCodeInput = document.getElementById('enterCodeInput');
+
+  function refreshGeneratedCode(){
+    generatedCodeEl.textContent = generateCode();
+  }
+  refreshGeneratedCode();
+
+  document.getElementById('btnRegenerateCode').addEventListener('click', refreshGeneratedCode);
+
+  document.getElementById('btnCopyCode').addEventListener('click', function(){
+    var code = generatedCodeEl.textContent;
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(code).then(function(){
+        var btn = document.getElementById('btnCopyCode');
+        var original = btn.textContent;
+        btn.textContent = 'Copiado!';
+        setTimeout(function(){ btn.textContent = original; }, 1500);
+      });
+    }
+  });
+
+  document.getElementById('btnUseGeneratedCode').addEventListener('click', function(){
+    connectWithCode(generatedCodeEl.textContent);
+  });
+
+  formEnterCode.addEventListener('submit', function(e){
+    e.preventDefault();
+    var code = enterCodeInput.value.trim().toUpperCase();
+    if(!code){ authStatus.textContent = 'Cola ou digita um código.'; return; }
+    connectWithCode(code);
+  });
+
+  document.getElementById('btnDisconnect').addEventListener('click', function(){
+    if(!confirm('Desconectar deste código neste aparelho? Você pode reconectar colando o código de novo a qualquer momento.')) return;
+    localStorage.removeItem(CODE_KEY);
+    currentCode = null;
+    consumoItems = [];
+    geraisItems = [];
+    refreshGeneratedCode();
+    enterCodeInput.value = '';
+    authStatus.textContent = '';
+    showAuthScreen();
+  });
+
+  function connectWithCode(code){
+    currentCode = code;
+    localStorage.setItem(CODE_KEY, code);
+    showApp();
+    initAppData();
+  }
+
+  function showApp(){
+    authOverlay.hidden = true;
+    userBar.hidden = false;
+    codeLabel.textContent = currentCode;
+  }
+  function showAuthScreen(){
+    authOverlay.hidden = false;
+    userBar.hidden = true;
+  }
+
+  function initAppData(){
+    Promise.all([loadConsumo(), loadGerais()]).then(function(results){
+      consumoItems = results[0];
+      geraisItems = results[1];
+      renderConsumo();
+      renderGerais();
+    });
+  }
+
+  // ---------- init ----------
+  var savedCode = localStorage.getItem(CODE_KEY);
+  if(savedCode){
+    connectWithCode(savedCode);
+  } else {
+    showAuthScreen();
+  }
+})();
+</script>
+</body>
+</html>
